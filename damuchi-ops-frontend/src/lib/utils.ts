@@ -41,7 +41,7 @@ export function bookingStatusBadgeClass(status: BookingStatus): string {
     CONFIRMED:       "badge-confirmed",
     CANCELLED:       "badge-cancelled",
     COMPLETED:       "badge-completed",
-    REFUNDED:        "badge-refunded",
+    NO_SHOW:         "badge-no-show",
   };
   return map[status] ?? "badge";
 }
@@ -52,7 +52,7 @@ export function bookingStatusLabel(status: BookingStatus): string {
     CONFIRMED:       "Confirmed",
     CANCELLED:       "Cancelled",
     COMPLETED:       "Completed",
-    REFUNDED:        "Refunded",
+    NO_SHOW:         "No-show",
   };
   return map[status] ?? status;
 }
@@ -74,3 +74,47 @@ export function truncate(str: string, maxLength: number): string {
 export function pluralize(count: number, singular: string, plural?: string): string {
   return `${count} ${count === 1 ? singular : (plural ?? singular + "s")}`;
 }
+
+export const getApiErrorMessage = (
+    error: unknown,
+    fallback: string
+): string => {
+  if (
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error
+  ) {
+    const response = (
+        error as {
+          response?: {
+            data?: {
+              message?: string;
+              detail?: string;
+              error?: string;
+            };
+          };
+        }
+    ).response;
+
+    if (response?.data?.message) {
+      return response.data.message;
+    }
+
+    if (response?.data?.detail) {
+      return response.data.detail;
+    }
+
+    if (response?.data?.error) {
+      return response.data.error;
+    }
+  }
+
+  if (
+      error instanceof Error &&
+      error.message
+  ) {
+    return error.message;
+  }
+
+  return fallback;
+};

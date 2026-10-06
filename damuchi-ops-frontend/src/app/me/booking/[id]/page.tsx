@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ChevronLeft, Calendar, Users, CreditCard, AlertCircle } from "lucide-react";
@@ -9,7 +10,7 @@ import {
   bookingStatusBadgeClass, bookingStatusLabel,
   formatCurrency, formatDate, formatDateTime,
 } from "@/lib/utils";
-import type { ApiError, Booking } from "@/types";
+import type { ApiError, Booking } from "@/types/index-types";
 
 export default function BookingDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +19,7 @@ export default function BookingDetailPage() {
   const [loading, setLoading]     = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -37,7 +39,7 @@ export default function BookingDetailPage() {
     if (!booking) return;
     setCancelling(true);
     try {
-      const updated = await bookingApi.cancelMyBooking(booking.id);
+      const updated = await bookingApi.cancelMyBooking(booking.id, cancelReason.trim() || undefined);
       setBooking(updated);
       setShowCancel(false);
       toast.success("Booking cancelled.");
@@ -132,6 +134,19 @@ export default function BookingDetailPage() {
                 ))}
               </div>
             </div>
+          )}
+          {booking.balanceAmount > 0 && (
+              <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm">
+                <p className="font-medium text-amber-800">
+                  Balance due: {formatCurrency(booking.balanceAmount, booking.currency)}
+                </p>
+                <p className="mt-1 text-xs text-amber-700">
+                  Paid so far: {formatCurrency(booking.amountPaid, booking.currency)} of {formatCurrency(booking.totalPrice, booking.currency)}
+                </p>
+                <Link href={`/me/enquiries?booking=${booking.id}`} className="mt-3 inline-block btn-secondary text-xs">
+                  Pay balance
+                </Link>
+              </div>
           )}
 
           {/* Special requests */}

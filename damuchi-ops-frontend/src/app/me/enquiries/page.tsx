@@ -1,733 +1,1463 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-
 import {
-    AlertTriangle,
-    ArrowLeft,
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
+import {
+    AnimatePresence,
+    motion,
+    useReducedMotion,
+} from "framer-motion";
+import {
+    AlertCircle,
+    ArrowRight,
     CalendarDays,
-    Check,
     CheckCircle2,
-    Clock, Download,
+    Clock3,
+    Download,
+    FileText,
     Inbox,
-    Mail,
+    Loader2,
     MapPin,
     MessageCircle,
     RefreshCw,
-    Send,
     Sparkles,
     Users,
-    Wallet,
     XCircle,
 } from "lucide-react";
-
 import { toast } from "sonner";
 
-import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
-import { PageHeader } from "@/components/layout/page-header";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-
 import { enquiryApi } from "@/lib/enquiry-api";
+import { cn, formatDate, getApiErrorMessage } from "@/lib/utils";
 
-import type {
-    EnquiryDetailResponse,
-    EnquirySummaryResponse,
-    QuoteResponse,
-    TourEnquiryStatus,
-} from "@/types/enquiry-types";
+// -----------------------------------------------------------------------------
+// Types
+// -----------------------------------------------------------------------------
 
-import type { ApiError } from "@/types/index-types";
+type EnquiryStatus =
+    | "NEW"
+    | "PENDING"
+    | "IN_REVIEW"
+    | "QUOTED"
+    | "QUOTE_SENT"
+    | "ACCEPTED"
+    | "CONVERTED"
+    | "CLOSED"
+    | "CANCELLED"
+    | string;
 
-/* ============================================================
-   CONSTANTS
-============================================================ */
+interface Quote {
+    id: string;
+    enquiryId: string;
 
-const PAGE_SIZE = 12;
+    pricePerAdult: number;
+    pricePerChild?: number | null;
 
-const FILTERABLE_STATUSES: TourEnquiryStatus[] = [
-    "NEW", "CONTACTED", "QUOTED", "CONVERTED", "COMPLETED", "LOST",
-];
+    totalPrice: number;
+    currency: string;
 
-const STATUS_COPY: Record<TourEnquiryStatus, { label: string; blurb: string }> = {
-    NEW: { label: "Sent", blurb: "We've received your enquiry and will be in touch shortly." },
-    CONTACTED: { label: "In conversation", blurb: "A safari specialist is working on your trip." },
-    QUOTED: { label: "Quote ready", blurb: "Review your quote below and accept when you're ready." },
-    CONVERTED: { label: "Booked", blurb: "Your trip is confirmed — we can't wait to host you." },
-    COMPLETED: { label: "Completed", blurb: "We hope you had an unforgettable journey with us." },
-    LOST: { label: "Closed", blurb: "This enquiry is no longer active." },
-    ARCHIVED: { label: "Archived", blurb: "This enquiry has been archived." },
+    validUntil?: string | null;
+    inclusionsNote?: string | null;
+
+    status?: string | null;
+    sentAt?: string | null;
+    respondedAt?: string | null;
+}
+
+interface Enquiry {
+    id: string;
+
+    tourId: string;
+    tourName: string;
+
+    status: EnquiryStatus;
+
+    preferredDate?: string | null;
+    flexibleDates?: boolean;
+
+    travelStartDate?: string | null;
+    travelEndDate?: string | null;
+
+    groupSizeAdults?: number | null;
+    groupSizeChildren?: number | null;
+
+    budgetRange?: string | null;
+    requirements?: string | null;
+
+    quotes?: Quote[];
+
+    bookingReference?: string | null;
+
+    createdDate?: string | null;
+    lastModifiedDate?: string | null;
+}
+
+// -----------------------------------------------------------------------------
+// Status configuration
+// -----------------------------------------------------------------------------
+
+const STATUS_CONFIG: Record<
+    string,
+    {
+        label: string;
+        description: string;
+        icon: typeof Clock3;
+        className: string;
+        dotClassName: string;
+    }
+> = {
+    NEW: {
+        label: "Received",
+        description: "We've received your travel request.",
+        icon: Inbox,
+        className:
+            "border-sky-200/70 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-300",
+        dotClassName: "bg-sky-500",
+    },
+
+    PENDING: {
+        label: "Being reviewed",
+        description: "Our travel team is reviewing your request.",
+        icon: Clock3,
+        className:
+            "border-amber-200/70 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300",
+        dotClassName: "bg-amber-500",
+    },
+
+    IN_REVIEW: {
+        label: "Being reviewed",
+        description: "Our travel team is reviewing your request.",
+        icon: Clock3,
+        className:
+            "border-amber-200/70 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300",
+        dotClassName: "bg-amber-500",
+    },
+
+    QUOTED: {
+        label: "Quote ready",
+        description: "Your personalised trip quote is ready.",
+        icon: Sparkles,
+        className: "border-coral/25 bg-coral/10 text-coral",
+        dotClassName: "bg-coral",
+    },
+
+    QUOTE_SENT: {
+        label: "Quote ready",
+        description: "Your personalised trip quote is ready.",
+        icon: Sparkles,
+        className: "border-coral/25 bg-coral/10 text-coral",
+        dotClassName: "bg-coral",
+    },
+
+    ACCEPTED: {
+        label: "Quote accepted",
+        description: "Your quote has been accepted.",
+        icon: CheckCircle2,
+        className:
+            "border-emerald-200/70 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300",
+        dotClassName: "bg-emerald-500",
+    },
+
+    CONVERTED: {
+        label: "Booking created",
+        description: "Your enquiry has become a booking.",
+        icon: CheckCircle2,
+        className:
+            "border-emerald-200/70 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300",
+        dotClassName: "bg-emerald-500",
+    },
+
+    CLOSED: {
+        label: "Closed",
+        description: "This enquiry has been closed.",
+        icon: CheckCircle2,
+        className:
+            "border-muted bg-muted/50 text-muted-foreground",
+        dotClassName: "bg-muted-foreground",
+    },
+
+    CANCELLED: {
+        label: "Cancelled",
+        description: "This enquiry has been cancelled.",
+        icon: XCircle,
+        className:
+            "border-destructive/20 bg-destructive/5 text-destructive",
+        dotClassName: "bg-destructive",
+    },
 };
 
-const STATUS_STYLES: Record<TourEnquiryStatus, string> = {
-    NEW: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-400",
-    CONTACTED: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-400",
-    QUOTED: "border-coral/30 bg-coral/10 text-coral",
-    CONVERTED: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-400",
-    COMPLETED: "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-400",
-    LOST: "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400",
-    ARCHIVED: "border-muted-foreground/20 bg-muted text-muted-foreground",
-};
+// -----------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------
 
-const STATUS_ICONS: Record<TourEnquiryStatus, React.ElementType> = {
-    NEW: Inbox,
-    CONTACTED: Clock,
-    QUOTED: Send,
-    CONVERTED: Sparkles,
-    COMPLETED: CheckCircle2,
-    LOST: XCircle,
-    ARCHIVED: XCircle,
-};
+function getStatusConfig(status?: string) {
+    return (
+        STATUS_CONFIG[status ?? ""] ?? {
+            label: status
+                ? status
+                    .toLowerCase()
+                    .replaceAll("_", " ")
+                    .replace(/\b\w/g, (char) =>
+                        char.toUpperCase()
+                    )
+                : "In progress",
+            description:
+                "Your enquiry is being processed.",
+            icon: Clock3,
+            className:
+                "border-border bg-muted/50 text-muted-foreground",
+            dotClassName: "bg-muted-foreground",
+        }
+    );
+}
 
-/* ============================================================
-   HELPERS
-============================================================ */
-async function handleDownloadQuotePdf(
-    enquiryId: string,
-    quoteId: string
+function getLatestQuote(enquiry: Enquiry) {
+    if (!enquiry.quotes?.length) {
+        return null;
+    }
+
+    return (
+        [...enquiry.quotes]
+            .sort((a, b) => {
+                const aDate = a.sentAt
+                    ? new Date(a.sentAt).getTime()
+                    : 0;
+
+                const bDate = b.sentAt
+                    ? new Date(b.sentAt).getTime()
+                    : 0;
+
+                return bDate - aDate;
+            })
+            .find((quote) =>
+                ["SENT", "ACCEPTED"].includes(
+                    quote.status?.toUpperCase() ?? ""
+                )
+            ) ??
+        enquiry.quotes[enquiry.quotes.length - 1]
+    );
+}
+
+function formatMoney(
+    amount?: number | null,
+    currency = "USD"
 ) {
+    if (amount == null) {
+        return "—";
+    }
+
     try {
-        const blob = await enquiryApi.downloadQuotePdf(
-            enquiryId,
-            quoteId,
-            true
-        );
-
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `quote-${quoteId}.pdf`;
-
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-
-        URL.revokeObjectURL(url);
-
-        toast.success("Quote PDF downloaded.");
-    } catch (err) {
-        toast.error(
-            getApiErrorMessage(
-                err,
-                "Couldn't download quote PDF."
-            )
-        );
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency,
+            maximumFractionDigits: 0,
+        }).format(amount);
+    } catch {
+        return `${currency} ${amount.toLocaleString()}`;
     }
 }
 
-function formatDate(iso?: string) {
-    if (!iso) return "—";
-    return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+function buildQuoteFileName(
+    quoteId: string,
+    tourName?: string
+) {
+    const safeTourName = tourName
+        ?.trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+    const shortQuoteId = quoteId
+        .slice(0, 8)
+        .toUpperCase();
+
+    return safeTourName
+        ? `${safeTourName}-quote-${shortQuoteId}.pdf`
+        : `quote-${shortQuoteId}.pdf`;
 }
 
-function getApiErrorMessage(err: unknown, fallback: string) {
-    return (err as ApiError)?.message || fallback;
-}
+// -----------------------------------------------------------------------------
+// Status badge
+// -----------------------------------------------------------------------------
 
-function generateBookingReference() {
-    const stamp = Date.now().toString(36).toUpperCase().slice(-6);
-    return `DMC-${stamp}`;
-}
+function StatusBadge({
+                         status,
+                     }: {
+    status?: string;
+}) {
+    const config = getStatusConfig(status);
+    const Icon = config.icon;
 
-/* ============================================================
-   PAGE SHELL — matches CategoryLandingPage's Navbar/main/Footer frame
-============================================================ */
-
-function PageShell({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex min-h-screen flex-col bg-background">
-            <Navbar />
-            <main className="flex-1">
-                <div className="container py-10 sm:py-14">{children}</div>
-            </main>
+        <span
+            className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border",
+                "px-2.5 py-1 text-xs font-semibold",
+                config.className
+            )}
+        >
+            <Icon className="h-3.5 w-3.5" />
 
+            {config.label}
+        </span>
+    );
+}
+
+// -----------------------------------------------------------------------------
+// Detail item
+// -----------------------------------------------------------------------------
+
+function DetailItem({
+                        icon: Icon,
+                        label,
+                        value,
+                    }: {
+    icon: typeof CalendarDays;
+    label: string;
+    value: React.ReactNode;
+}) {
+    return (
+        <div className="flex min-w-0 items-start gap-3">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground">
+                <Icon className="h-4 w-4" />
+            </div>
+
+            <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    {label}
+                </p>
+
+                <p className="mt-0.5 truncate text-sm font-medium text-foreground">
+                    {value}
+                </p>
+            </div>
         </div>
     );
 }
 
-/* ============================================================
-   STATUS BADGE
-============================================================ */
+// -----------------------------------------------------------------------------
+// Quote preview
+// -----------------------------------------------------------------------------
 
-function StatusBadge({ status }: { status: TourEnquiryStatus }) {
-    const Icon = STATUS_ICONS[status];
-    return (
-        <Badge variant="outline" className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${STATUS_STYLES[status]}`}>
-            <Icon className="mr-1 h-3 w-3" />
-            {STATUS_COPY[status]?.label ?? status}
-        </Badge>
-    );
+interface QuotePreviewProps {
+    quote: Quote;
+
+    onOpen: () => void;
+    onDownload: () => void;
+
+    downloading?: boolean;
 }
 
-/* ============================================================
-   ACCEPT QUOTE DIALOG
-============================================================ */
+function QuotePreview({
+                          quote,
+                          onOpen,
+                          onDownload,
+                          downloading = false,
+                      }: QuotePreviewProps) {
+    const expired =
+        Boolean(quote.validUntil) &&
+        new Date(
+            quote.validUntil as string
+        ).getTime() < Date.now();
 
-function AcceptQuoteDialog({open, quote, onClose, onAccepted,}: {
-    open: boolean;
-    quote: QuoteResponse | null;
-    onClose: () => void;
-    onAccepted: () => void;
-}) {
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    async function handleAccept() {
-        if (!quote) return;
-
-        setIsSubmitting(true);
-
-        try {
-            await enquiryApi.acceptQuote(quote.enquiryId, quote.id, {
-                termsAccepted: true,
-            });
-
-            toast.success("Quote accepted — follow the payment steps below.");
-            onAccepted();
-        } catch (err) {
-            toast.error(
-                getApiErrorMessage(
-                    err,
-                    "Couldn't accept the quote. Please try again."
-                )
-            );
-        } finally {
-            setIsSubmitting(false);
-        }
-    }
-
-    if (!quote) return null;
+    const accepted =
+        quote.status?.toUpperCase() === "ACCEPTED";
 
     return (
-        <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle className="font-display text-xl">Accept your quote</DialogTitle>
-                    <DialogDescription>
-                        Confirm your travel dates to secure this booking.
-                    </DialogDescription>
-                </DialogHeader>
+        <motion.div
+            initial={{
+                opacity: 0,
+                y: 8,
+            }}
+            animate={{
+                opacity: 1,
+                y: 0,
+            }}
+            className={cn(
+                "mt-5 overflow-hidden rounded-2xl border",
+                accepted
+                    ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/50 dark:bg-emerald-950/20"
+                    : expired
+                        ? "border-border bg-muted/40"
+                        : "border-coral/20 bg-coral/[0.045]"
+            )}
+        >
+            <div className="flex flex-col gap-4 p-4 sm:p-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    {/* Quote information */}
+                    <div className="flex min-w-0 items-start gap-3">
+                        <div
+                            className={cn(
+                                "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                                accepted
+                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                                    : "bg-coral/10 text-coral"
+                            )}
+                        >
+                            {accepted ? (
+                                <CheckCircle2 className="h-5 w-5" />
+                            ) : (
+                                <Sparkles className="h-5 w-5" />
+                            )}
+                        </div>
 
-                <div className="space-y-4 py-2">
-                    <div className="rounded-xl border border-coral/15 bg-coral/[0.05] p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-coral">
-                            Quote total
-                        </p>
-
-                        <p className="mt-1 font-display text-2xl font-semibold">
-                            {quote.currency} {quote.totalPrice.toLocaleString()}
-                        </p>
-
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            {quote.currency}{" "}
-                            {quote.pricePerAdult.toLocaleString()}
-                            /adult
-                            {quote.pricePerChild
-                                ? ` · ${quote.currency} ${quote.pricePerChild.toLocaleString()}/child`
-                                : ""}
-                        </p>
-                    </div>
-
-                    <div className="rounded-xl border border-border/70 bg-muted/30 p-4">
-                        <div className="flex gap-3">
-                            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
-
-                            <div>
-                                <p className="text-sm font-semibold">
-                                    Payment terms
+                        <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <p className="font-semibold">
+                                    {accepted
+                                        ? "Quote accepted"
+                                        : expired
+                                            ? "Quote expired"
+                                            : "Your personalised quote"}
                                 </p>
 
-                                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                                    By accepting this quote, you confirm that you
-                                    agree to the quoted price and the payment terms.
-                                    Payment instructions will be provided after
-                                    acceptance.
-                                </p>
+                                {!accepted && !expired && (
+                                    <span className="rounded-full bg-coral/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-coral">
+                                        Action needed
+                                    </span>
+                                )}
                             </div>
+
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                {quote.validUntil
+                                    ? expired
+                                        ? `Expired ${formatDate(
+                                            quote.validUntil
+                                        )}`
+                                        : `Valid until ${formatDate(
+                                            quote.validUntil
+                                        )}`
+                                    : "Personalised pricing for your trip"}
+                            </p>
                         </div>
                     </div>
 
-                    {quote.validUntil && (
-                        <p className="text-center text-xs text-muted-foreground">
-                            Quote valid until{" "}
-                            <span className="font-medium text-foreground">
-                {formatDate(quote.validUntil)}
-            </span>
+                    {/* Price */}
+                    <div className="shrink-0 text-left sm:text-right">
+                        <p className="text-xs text-muted-foreground">
+                            Total
                         </p>
-                    )}
+
+                        <p className="text-xl font-bold tracking-tight">
+                            {formatMoney(
+                                quote.totalPrice,
+                                quote.currency
+                            )}
+                        </p>
+                    </div>
                 </div>
 
-                <DialogFooter>
-                    <Button
-                        variant="outline"
-                        onClick={onClose}
-                        disabled={isSubmitting}
-                    >
-                        Cancel
-                    </Button>
+                {/* Optional inclusion note */}
+                {quote.inclusionsNote && (
+                    <div className="rounded-xl border border-border/60 bg-background/60 px-4 py-3">
+                        <div className="flex items-start gap-2.5">
+                            <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
 
-                    <Button
-                        variant="accent"
-                        onClick={handleAccept}
-                        disabled={isSubmitting}
+                            <p className="text-xs leading-5 text-muted-foreground">
+                                {quote.inclusionsNote}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Quote actions */}
+                <div className="flex flex-col gap-2 border-t border-border/50 pt-4 sm:flex-row sm:items-center sm:justify-end">
+                    <button
+                        type="button"
+                        onClick={onDownload}
+                        disabled={downloading}
+                        aria-busy={downloading}
+                        className={cn(
+                            "inline-flex h-10 items-center justify-center gap-2 rounded-xl border",
+                            "border-border bg-background px-4 text-sm font-semibold text-foreground",
+                            "transition-all duration-200",
+                            "hover:-translate-y-0.5 hover:border-foreground/20 hover:bg-muted/40",
+                            "focus-visible:outline-none focus-visible:ring-2",
+                            "focus-visible:ring-coral/50",
+                            "disabled:pointer-events-none disabled:opacity-60"
+                        )}
                     >
-                        {isSubmitting ? (
+                        {downloading ? (
                             <>
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                                Accepting…
+                                <Loader2 className="h-4 w-4 animate-spin" />
+
+                                Downloading...
                             </>
                         ) : (
                             <>
-                                <Check className="h-4 w-4" />
-                                Accept quote
+                                <Download className="h-4 w-4" />
+
+                                Download PDF
                             </>
                         )}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={onOpen}
+                        className={cn(
+                            "inline-flex h-10 items-center justify-center gap-2 rounded-xl",
+                            "bg-foreground px-4 text-sm font-semibold text-background",
+                            "transition-all duration-200",
+                            "hover:-translate-y-0.5 hover:shadow-md",
+                            "focus-visible:outline-none focus-visible:ring-2",
+                            "focus-visible:ring-coral/50"
+                        )}
+                    >
+                        View quote
+
+                        <ArrowRight className="h-4 w-4" />
+                    </button>
+                </div>
+            </div>
+        </motion.div>
     );
 }
 
-/* ============================================================
-   ENQUIRY DETAIL VIEW
-============================================================ */
+// -----------------------------------------------------------------------------
+// Enquiry card
+// -----------------------------------------------------------------------------
 
-function EnquiryDetailPanel({
-                                detail, onBack, onRefresh,
-                            }: {
-    detail: EnquiryDetailResponse;
-    onBack: () => void;
-    onRefresh: () => void;
-}) {
-    const [acceptingQuote, setAcceptingQuote] = useState<QuoteResponse | null>(null);
+interface EnquiryCardProps {
+    enquiry: Enquiry;
 
-    const statusInfo = STATUS_COPY[detail.status];
-    const latestSentQuote = detail.quotes.find((q) => q.status === "SENT");
+    onQuote: (
+        enquiry: Enquiry,
+        quote: Quote
+    ) => void;
+
+    onDownloadQuote: (
+        enquiry: Enquiry,
+        quote: Quote
+    ) => void;
+
+    downloadingQuoteId: string | null;
+}
+
+function EnquiryCard({
+                         enquiry,
+                         onQuote,
+                         onDownloadQuote,
+                         downloadingQuoteId,
+                     }: EnquiryCardProps) {
+    const status =
+        getStatusConfig(enquiry.status);
+
+    const latestQuote =
+        getLatestQuote(enquiry);
+
+    const adults =
+        enquiry.groupSizeAdults ?? 0;
+
+    const children =
+        enquiry.groupSizeChildren ?? 0;
+
+    const travellers =
+        adults + children;
+
+    const travelDate =
+        enquiry.travelStartDate
+            ? enquiry.travelEndDate
+                ? `${formatDate(
+                    enquiry.travelStartDate
+                )} – ${formatDate(
+                    enquiry.travelEndDate
+                )}`
+                : formatDate(
+                    enquiry.travelStartDate
+                )
+            : enquiry.preferredDate
+                ? formatDate(
+                    enquiry.preferredDate
+                )
+                : enquiry.flexibleDates
+                    ? "Flexible dates"
+                    : "Dates to be confirmed";
 
     return (
-        <div className="space-y-6">
-            <button
-                type="button"
-                onClick={onBack}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Back to my enquiries
-            </button>
-
-            <Card className="overflow-hidden border-border/70">
-                <CardContent className="p-6">
-                    <div className="flex items-start justify-between gap-4">
-                        <div>
-                            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                                <MapPin className="h-3.5 w-3.5 text-coral" />
-                                {detail.tourName}
-                            </div>
-                            <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight">
-                                {statusInfo?.label ?? detail.status}
-                            </h1>
-                            <p className="mt-1.5 text-sm text-muted-foreground">{statusInfo?.blurb}</p>
-                        </div>
-                        <StatusBadge status={detail.status} />
-                    </div>
-                </CardContent>
-            </Card>
-
-            {latestSentQuote && (
-                <Card className="border-coral/25 bg-coral/[0.04]">
-                    <CardContent className="p-5">
-                        <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-coral">
-                                    Your quote is ready
-                                </p>
-                                <p className="mt-1.5 font-display text-2xl font-semibold">
-                                    {latestSentQuote.currency} {latestSentQuote.totalPrice.toLocaleString()}
-                                </p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                    {latestSentQuote.currency} {latestSentQuote.pricePerAdult.toLocaleString()}/adult
-                                    {latestSentQuote.pricePerChild ? ` · ${latestSentQuote.currency} ${latestSentQuote.pricePerChild.toLocaleString()}/child` : ""}
-                                    {" · valid until "}{formatDate(latestSentQuote.validUntil)}
-                                </p>
-                                {latestSentQuote.inclusionsNote && (
-                                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground/80">
-                                        {latestSentQuote.inclusionsNote}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                            <Button
-                                variant="accent"
-                                className="flex-1"
-                                onClick={() => setAcceptingQuote(latestSentQuote)}
-                            >
-                                <Check className="h-4 w-4" />
-                                Accept this quote
-                            </Button>
-
-                            <Button
-                                variant="outline"
-                                className="flex-1"
-                                onClick={() =>
-                                    handleDownloadQuotePdf(
-                                        detail.id,
-                                        latestSentQuote.id
-                                    )
-                                }
-                            >
-                                Download PDF
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
+        <motion.article
+            layout
+            initial={{
+                opacity: 0,
+                y: 14,
+            }}
+            animate={{
+                opacity: 1,
+                y: 0,
+            }}
+            exit={{
+                opacity: 0,
+                y: -8,
+            }}
+            transition={{
+                duration: 0.3,
+                ease: [
+                    0.22,
+                    1,
+                    0.36,
+                    1,
+                ],
+            }}
+            className={cn(
+                "group relative overflow-hidden rounded-3xl border",
+                "bg-card shadow-sm",
+                "transition-all duration-300",
+                "hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/[0.04]",
+                "dark:hover:shadow-black/20"
             )}
-
-            <Card>
-                <CardContent className="space-y-4 p-5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                        Your request
-                    </p>
-                    <div className="grid grid-cols-2 gap-x-5 gap-y-4">
-                        <div>
-                            <p className="text-xs text-muted-foreground">Preferred date</p>
-                            <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium">
-                                <CalendarDays className="h-3.5 w-3.5" /> {formatDate(detail.preferredDate)}
-                            </p>
-                            {detail.flexibleDates && <p className="mt-0.5 text-xs text-coral">Flexible dates</p>}
-                        </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground">Travellers</p>
-                            <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium">
-                                <Users className="h-3.5 w-3.5" />
-                                {detail.groupSizeAdults ?? 0} adults
-                                {detail.groupSizeChildren ? `, ${detail.groupSizeChildren} children` : ""}
-                            </p>
-                        </div>
-                        {detail.budgetRange && (
-                            <div>
-                                <p className="text-xs text-muted-foreground">Budget</p>
-                                <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium">
-                                    <Wallet className="h-3.5 w-3.5" /> {detail.budgetRange}
-                                </p>
-                            </div>
-                        )}
-                        {detail.travelStartDate && detail.travelEndDate && (
-                            <div>
-                                <p className="text-xs text-muted-foreground">Confirmed dates</p>
-                                <p className="mt-1 text-sm font-medium">
-                                    {formatDate(detail.travelStartDate)} – {formatDate(detail.travelEndDate)}
-                                </p>
-                            </div>
-                        )}
-                        {detail.bookingReference && (
-                            <div>
-                                <p className="text-xs text-muted-foreground">Booking reference</p>
-                                <p className="mt-1 text-sm font-medium">{detail.bookingReference}</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {detail.requirements && (
-                        <>
-                            <Separator />
-                            <div>
-                                <p className="text-xs text-muted-foreground">Your message</p>
-                                <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6">{detail.requirements}</p>
-                            </div>
-                        </>
-                    )}
-                </CardContent>
-            </Card>
-
-            {detail.quotes.filter((q) => q.status !== "SENT").length > 0 && (
-                <Card>
-                    <CardContent className="space-y-3 p-5">
-                        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                            Quote history
-                        </p>
-                        {detail.quotes.filter((q) => q.status !== "SENT").map((q) => (
-                            <div
-                                key={q.id}
-                                className="flex items-center justify-between gap-3 rounded-lg border border-border/60 p-3"
-                            >
-                                <div>
-                                    <p className="text-sm font-medium">
-                                        {q.currency} {q.totalPrice.toLocaleString()}
-                                    </p>
-
-                                    <p className="text-xs text-muted-foreground">
-                                        Valid until {formatDate(q.validUntil)}
-                                    </p>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    <Badge
-                                        variant="outline"
-                                        className="text-[10px]"
-                                    >
-                                        {q.status}
-                                    </Badge>
-
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() =>
-                                            handleDownloadQuotePdf(
-                                                detail.id,
-                                                q.id
-                                            )
-                                        }
-                                    >
-                                        <Download className="h-4 w-4" />
-                                        PDF
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
-
-            {detail.activity.length > 0 && (
-                <Card>
-                    <CardContent className="space-y-4 p-5">
-                        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                            Timeline
-                        </p>
-                        <div className="space-y-4">
-                            {detail.activity.map((event) => (
-                                <div key={event.id} className="flex gap-3">
-                                    <div className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-coral" />
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-sm">{event.note || event.action.replace(/_/g, " ").toLowerCase()}</p>
-                                        <p className="mt-0.5 text-[11px] text-muted-foreground">{formatDate(event.createdDate)}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            <Card className="bg-muted/30">
-                <CardContent className="flex flex-wrap items-center justify-between gap-3 p-5">
-                    <p className="text-sm text-muted-foreground">Questions about this enquiry?</p>
-                    <div className="flex gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                            <a href="mailto:support@damuchi.com"><Mail className="h-3.5 w-3.5" /> Email us</a>
-                        </Button>
-                        <Button variant="outline" size="sm" asChild>
-                            <a href="https://wa.me/254700000000" target="_blank" rel="noreferrer">
-                                <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
-                            </a>
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <AcceptQuoteDialog
-                open={!!acceptingQuote}
-                quote={acceptingQuote}
-                onClose={() => setAcceptingQuote(null)}
-                onAccepted={() => { setAcceptingQuote(null); onRefresh(); }}
+        >
+            {/* Accent line */}
+            <div
+                aria-hidden="true"
+                className={cn(
+                    "absolute inset-x-0 top-0 h-1",
+                    status.dotClassName
+                )}
             />
+
+            <div className="p-5 sm:p-6 lg:p-7">
+                {/* Header */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                            <StatusBadge
+                                status={
+                                    enquiry.status
+                                }
+                            />
+
+                            {enquiry.bookingReference && (
+                                <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                    {
+                                        enquiry.bookingReference
+                                    }
+                                </span>
+                            )}
+                        </div>
+
+                        <h2 className="line-clamp-2 text-lg font-bold tracking-tight sm:text-xl">
+                            {enquiry.tourName}
+                        </h2>
+
+                        <p className="mt-1.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-coral" />
+
+                            {
+                                status.description
+                            }
+                        </p>
+                    </div>
+
+                    <div className="shrink-0 text-left sm:text-right">
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Enquiry
+                        </p>
+
+                        <p className="mt-0.5 font-mono text-xs text-muted-foreground">
+                            #
+                            {enquiry.id
+                                .slice(0, 8)
+                                .toUpperCase()}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Trip details */}
+                <div className="mt-6 grid gap-4 border-y border-border/60 py-5 sm:grid-cols-2 lg:grid-cols-3">
+                    <DetailItem
+                        icon={CalendarDays}
+                        label="Travel dates"
+                        value={travelDate}
+                    />
+
+                    <DetailItem
+                        icon={Users}
+                        label="Travellers"
+                        value={
+                            travellers
+                                ? `${travellers} ${
+                                    travellers ===
+                                    1
+                                        ? "traveller"
+                                        : "travellers"
+                                }`
+                                : "To be confirmed"
+                        }
+                    />
+
+                    <DetailItem
+                        icon={MapPin}
+                        label="Planning"
+                        value={
+                            enquiry.flexibleDates
+                                ? "Flexible itinerary"
+                                : "Preferred dates"
+                        }
+                    />
+                </div>
+
+                {/* Requirements */}
+                {enquiry.requirements && (
+                    <div className="mt-5 rounded-2xl bg-muted/45 p-4">
+                        <div className="flex items-start gap-3">
+                            <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+
+                            <div className="min-w-0">
+                                <p className="text-xs font-semibold text-foreground">
+                                    Your request
+                                </p>
+
+                                <p className="mt-1 line-clamp-3 text-sm leading-6 text-muted-foreground">
+                                    {
+                                        enquiry.requirements
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Quote */}
+                {latestQuote && (
+                    <QuotePreview
+                        quote={latestQuote}
+                        onOpen={() =>
+                            onQuote(
+                                enquiry,
+                                latestQuote
+                            )
+                        }
+                        onDownload={() =>
+                            onDownloadQuote(
+                                enquiry,
+                                latestQuote
+                            )
+                        }
+                        downloading={
+                            downloadingQuoteId ===
+                            latestQuote.id
+                        }
+                    />
+                )}
+
+                {/* Footer */}
+                <div className="mt-5 flex flex-col gap-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                    <span>
+                        Submitted{" "}
+                        {enquiry.createdDate
+                            ? formatDate(
+                                enquiry.createdDate
+                            )
+                            : "recently"}
+                    </span>
+
+                    {enquiry.lastModifiedDate && (
+                        <span>
+                            Updated{" "}
+                            {formatDate(
+                                enquiry.lastModifiedDate
+                            )}
+                        </span>
+                    )}
+                </div>
+            </div>
+        </motion.article>
+    );
+}
+
+// -----------------------------------------------------------------------------
+// Empty state
+// -----------------------------------------------------------------------------
+
+function EmptyState() {
+    return (
+        <motion.div
+            initial={{
+                opacity: 0,
+                y: 10,
+            }}
+            animate={{
+                opacity: 1,
+                y: 0,
+            }}
+            className="rounded-3xl border border-dashed border-border bg-card/60 px-6 py-16 text-center sm:px-10"
+        >
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-coral/10 text-coral">
+                <Inbox className="h-7 w-7" />
+            </div>
+
+            <h2 className="mt-5 text-xl font-bold tracking-tight">
+                No enquiries yet
+            </h2>
+
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+                Your personalised trip requests
+                will appear here. Once you send
+                an enquiry, you can follow its
+                progress and review quotes from
+                one place.
+            </p>
+        </motion.div>
+    );
+}
+
+// -----------------------------------------------------------------------------
+// Loading state
+// -----------------------------------------------------------------------------
+
+function EnquirySkeleton() {
+    return (
+        <div className="overflow-hidden rounded-3xl border bg-card p-6">
+            <div className="animate-pulse space-y-6">
+                <div className="flex justify-between gap-4">
+                    <div className="space-y-3">
+                        <div className="h-6 w-24 rounded-full bg-muted" />
+
+                        <div className="h-6 w-72 max-w-full rounded-lg bg-muted" />
+
+                        <div className="h-4 w-56 rounded bg-muted" />
+                    </div>
+
+                    <div className="hidden h-8 w-24 rounded bg-muted sm:block" />
+                </div>
+
+                <div className="grid gap-4 border-y py-5 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="h-12 rounded-xl bg-muted" />
+
+                    <div className="h-12 rounded-xl bg-muted" />
+
+                    <div className="h-12 rounded-xl bg-muted" />
+                </div>
+
+                <div className="h-24 rounded-2xl bg-muted" />
+            </div>
         </div>
     );
 }
 
-/* ============================================================
-   PAGE
-============================================================ */
+// -----------------------------------------------------------------------------
+// Page
+// -----------------------------------------------------------------------------
 
-export default function MyEnquiriesPage() {
-    const [enquiries, setEnquiries] = useState<EnquirySummaryResponse[]>([]);
-    const [page, setPage] = useState(0);
-    const [totalPages, setTotalPages] = useState(0);
-    const [isLoading, setIsLoading] = useState(true);
-    const [loadError, setLoadError] = useState<string | null>(null);
-    const [statusFilter, setStatusFilter] = useState<TourEnquiryStatus | "ALL">("ALL");
+export default function EnquiriesPage() {
+    const shouldReduceMotion =
+        useReducedMotion();
 
-    const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [detail, setDetail] = useState<EnquiryDetailResponse | null>(null);
-    const [detailLoading, setDetailLoading] = useState(false);
+    const [enquiries, setEnquiries] =
+        useState<Enquiry[]>([]);
 
-    const load = useCallback(async (targetPage = 0) => {
-        setIsLoading(true);
-        setLoadError(null);
-        try {
-            const data = await enquiryApi.myEnquiries(
-                statusFilter === "ALL" ? undefined : statusFilter,
-                targetPage,
-                PAGE_SIZE,
-            );
-            setEnquiries(Array.isArray(data?.content) ? data.content : []);
-            setTotalPages(data?.totalPages ?? 0);
-            setPage(targetPage);
-        } catch (err) {
-            const message = getApiErrorMessage(err, "Couldn't load your enquiries.");
-            setLoadError(message);
-            setEnquiries([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [statusFilter]);
+    const [loading, setLoading] =
+        useState(true);
 
-    useEffect(() => { load(0); }, [load]);
+    const [refreshing, setRefreshing] =
+        useState(false);
 
-    const openDetail = useCallback(async (id: string) => {
-        setSelectedId(id);
-        setDetailLoading(true);
-        try {
-            const data = await enquiryApi.myEnquiryDetail(id);
-            setDetail(data);
-        } catch (err) {
-            toast.error(getApiErrorMessage(err, "Couldn't load this enquiry."));
-            setSelectedId(null);
-        } finally {
-            setDetailLoading(false);
-        }
-    }, []);
+    const [error, setError] =
+        useState<string | null>(null);
 
-    async function refreshDetail() {
-        if (!selectedId) return;
-        const data = await enquiryApi.myEnquiryDetail(selectedId);
-        setDetail(data);
-        load(page);
-    }
+    const [
+        downloadingQuoteId,
+        setDownloadingQuoteId,
+    ] = useState<string | null>(null);
 
-    const hasNeedsAttention = useMemo(
-        () => enquiries.some((e) => e.status === "QUOTED"),
-        [enquiries],
+    // -------------------------------------------------------------------------
+    // Load enquiries
+    // -------------------------------------------------------------------------
+
+    const loadEnquiries = useCallback(
+        async (silent = false) => {
+            try {
+                setError(null);
+
+                if (silent) {
+                    setRefreshing(true);
+                } else {
+                    setLoading(true);
+                }
+
+                const response =
+                    await enquiryApi.myEnquiries(
+                        undefined,
+                        0,
+                        50
+                    );
+
+                /*
+                 * Supports:
+                 *
+                 * response.content
+                 * response.data.content
+                 * response.data
+                 *
+                 * This remains defensive so the page works
+                 * with slightly different API wrapper shapes.
+                 */
+                const data =
+                    (
+                        response as {
+                            content?: Enquiry[];
+                            data?:
+                                | Enquiry[]
+                                | {
+                                content?: Enquiry[];
+                            };
+                        }
+                    )?.content ??
+                    (
+                        response as {
+                            data?: {
+                                content?: Enquiry[];
+                            };
+                        }
+                    )?.data?.content ??
+                    (
+                        response as {
+                            data?: Enquiry[];
+                        }
+                    )?.data ??
+                    [];
+
+                setEnquiries(
+                    Array.isArray(data)
+                        ? data
+                        : []
+                );
+            } catch (err) {
+                const message =
+                    getApiErrorMessage(
+                        err,
+                        "We couldn't load your enquiries right now."
+                    );
+
+                setError(message);
+            } finally {
+                setLoading(false);
+                setRefreshing(false);
+            }
+        },
+        []
     );
 
-    // ── Detail view — same Navbar/main/Footer shell as the list view below ──
-    if (selectedId) {
-        return (
-            <PageShell>
-                <div className="mx-auto max-w-2xl">
-                    {detailLoading || !detail ? (
-                        <div className="space-y-3">
-                            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}
-                        </div>
-                    ) : (
-                        <EnquiryDetailPanel
-                            detail={detail}
-                            onBack={() => { setSelectedId(null); setDetail(null); }}
-                            onRefresh={refreshDetail}
-                        />
-                    )}
-                </div>
-            </PageShell>
+    useEffect(() => {
+        void loadEnquiries();
+    }, [loadEnquiries]);
+
+    // -------------------------------------------------------------------------
+    // Quote statistics
+    // -------------------------------------------------------------------------
+
+    const actionableQuotes =
+        useMemo(() => {
+            return enquiries.reduce(
+                (count, enquiry) => {
+                    const quote =
+                        getLatestQuote(
+                            enquiry
+                        );
+
+                    if (
+                        quote &&
+                        quote.status?.toUpperCase() ===
+                        "SENT" &&
+                        (!quote.validUntil ||
+                            new Date(
+                                quote.validUntil
+                            ).getTime() >
+                            Date.now())
+                    ) {
+                        return count + 1;
+                    }
+
+                    return count;
+                },
+                0
+            );
+        }, [enquiries]);
+
+    // -------------------------------------------------------------------------
+    // View quote
+    // -------------------------------------------------------------------------
+
+    const handleQuote = (
+        _enquiry: Enquiry,
+        quote: Quote
+    ) => {
+        /*
+         * Replace this with your quote sheet/dialog when ready.
+         *
+         * Your acceptance request can remain:
+         *
+         * await enquiryApi.acceptQuote(
+         *     quote.enquiryId,
+         *     quote.id,
+         *     { termsAccepted: true }
+         * );
+         */
+
+        toast.info("Quote details", {
+            description: `Your quote totals ${formatMoney(
+                quote.totalPrice,
+                quote.currency
+            )}.`,
+        });
+    };
+
+    // -------------------------------------------------------------------------
+    // Download quote PDF
+    // -------------------------------------------------------------------------
+
+    const handleDownloadQuotePdf =
+        useCallback(
+            async (
+                enquiry: Enquiry,
+                quote: Quote
+            ) => {
+                if (downloadingQuoteId) {
+                    return;
+                }
+
+                const enquiryId =
+                    quote.enquiryId ||
+                    enquiry.id;
+
+                if (!enquiryId) {
+                    toast.error(
+                        "Unable to download quote",
+                        {
+                            description:
+                                "The enquiry reference is missing.",
+                        }
+                    );
+
+                    return;
+                }
+
+                let objectUrl:
+                    | string
+                    | null = null;
+
+                try {
+                    setDownloadingQuoteId(
+                        quote.id
+                    );
+
+                    const response =
+                        await enquiryApi.downloadQuotePdf(
+                            enquiryId,
+                            quote.id,
+                            true
+                        );
+
+                    /*
+                     * Expected contract:
+                     *
+                     * downloadQuotePdf(...) => Blob
+                     *
+                     * This also tolerates Axios-style:
+                     *
+                     * { data: Blob }
+                     */
+                    const possibleResponse =
+                        response as
+                            | Blob
+                            | {
+                            data?: Blob;
+                        };
+
+                    const blob =
+                        possibleResponse instanceof
+                        Blob
+                            ? possibleResponse
+                            : possibleResponse?.data;
+
+                    if (
+                        !(blob instanceof Blob)
+                    ) {
+                        throw new Error(
+                            "The server did not return a valid PDF file."
+                        );
+                    }
+
+                    if (blob.size === 0) {
+                        throw new Error(
+                            "The generated PDF is empty."
+                        );
+                    }
+
+                    const pdfBlob =
+                        blob.type ===
+                        "application/pdf"
+                            ? blob
+                            : new Blob(
+                                [blob],
+                                {
+                                    type: "application/pdf",
+                                }
+                            );
+
+                    objectUrl =
+                        window.URL.createObjectURL(
+                            pdfBlob
+                        );
+
+                    const link =
+                        document.createElement(
+                            "a"
+                        );
+
+                    link.href =
+                        objectUrl;
+
+                    link.download =
+                        buildQuoteFileName(
+                            quote.id,
+                            enquiry.tourName
+                        );
+
+                    link.style.display =
+                        "none";
+
+                    document.body.appendChild(
+                        link
+                    );
+
+                    link.click();
+
+                    document.body.removeChild(
+                        link
+                    );
+
+                    toast.success(
+                        "Quote downloaded",
+                        {
+                            description:
+                                "Your quote PDF has been saved to your device.",
+                        }
+                    );
+                } catch (err) {
+                    toast.error(
+                        "Couldn't download quote",
+                        {
+                            description:
+                                getApiErrorMessage(
+                                    err,
+                                    "We couldn't download your quote PDF. Please try again."
+                                ),
+                        }
+                    );
+                } finally {
+                    /*
+                     * Revoke on the next event-loop cycle.
+                     *
+                     * Revoking immediately after link.click()
+                     * can interfere with downloads in some browsers.
+                     */
+                    if (objectUrl) {
+                        const url =
+                            objectUrl;
+
+                        window.setTimeout(
+                            () => {
+                                window.URL.revokeObjectURL(
+                                    url
+                                );
+                            },
+                            1000
+                        );
+                    }
+
+                    setDownloadingQuoteId(
+                        null
+                    );
+                }
+            },
+            [downloadingQuoteId]
         );
-    }
+
+    // -------------------------------------------------------------------------
+    // Render
+    // -------------------------------------------------------------------------
 
     return (
-        <PageShell>
-            <div className="mx-auto max-w-3xl space-y-6">
-                <PageHeader
-                    eyebrow="Your trips"
-                    title="My enquiries"
-                    subtitle={
-                        isLoading
-                            ? "Loading…"
-                            : hasNeedsAttention
-                                ? "You have a quote waiting for your response"
-                                : "Track your safari enquiries and quotes"
-                    }
-                    action={
-                        <Button variant="outline" size="sm" onClick={() => load(page)} disabled={isLoading}>
-                            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
-                            Refresh
-                        </Button>
-                    }
+        <div className="mx-auto w-full max-w-5xl">
+            {/* Hero */}
+            <motion.header
+                initial={
+                    shouldReduceMotion
+                        ? false
+                        : {
+                            opacity: 0,
+                            y: 12,
+                        }
+                }
+                animate={
+                    shouldReduceMotion
+                        ? undefined
+                        : {
+                            opacity: 1,
+                            y: 0,
+                        }
+                }
+                transition={{
+                    duration: 0.4,
+                    ease: [
+                        0.22,
+                        1,
+                        0.36,
+                        1,
+                    ],
+                }}
+                className="relative mb-8 overflow-hidden rounded-3xl border bg-card"
+            >
+                {/* Decorative glow */}
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-coral/10 blur-3xl"
                 />
 
-                <div className="flex items-center gap-2">
-                    <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as TourEnquiryStatus | "ALL")}>
-                        <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="ALL">All enquiries</SelectItem>
-                            {FILTERABLE_STATUSES.map((s) => (
-                                <SelectItem key={s} value={s}>{STATUS_COPY[s].label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                <div className="relative p-6 sm:p-8 lg:p-10">
+                    <div className="flex flex-col gap-7 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="max-w-2xl">
+                            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-coral/10 px-3 py-1.5 text-xs font-semibold text-coral">
+                                <Sparkles className="h-3.5 w-3.5" />
 
-                {isLoading ? (
-                    <div className="space-y-3">
-                        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-2xl" />)}
-                    </div>
-                ) : loadError ? (
-                    <EmptyState icon={AlertTriangle} title="Couldn't load your enquiries" description={loadError} />
-                ) : enquiries.length === 0 ? (
-                    <EmptyState
-                        icon={Inbox}
-                        title="No enquiries yet"
-                        description="Browse our tours and send an enquiry to start planning your trip."
-                    />
-                ) : (
-                    <div className="space-y-3">
-                        {enquiries.map((enquiry) => (
-                            <Card
-                                key={enquiry.id}
-                                className="cursor-pointer border-border/70 transition-all hover:-translate-y-0.5 hover:border-coral/30 hover:shadow-md"
-                                onClick={() => openDetail(enquiry.id)}
-                            >
-                                <CardContent className="flex items-center justify-between gap-4 p-5">
-                                    <div className="min-w-0">
-                                        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                                            <MapPin className="h-3.5 w-3.5 text-coral" />
-                                            <span className="truncate">{enquiry.tourName}</span>
+                                Your travel
+                                requests
+                            </div>
+
+                            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                                Enquiries
+                            </h1>
+
+                            <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+                                Follow your
+                                personalised trip
+                                requests, review
+                                quotes, download
+                                your travel
+                                documents, and
+                                keep everything
+                                for your next
+                                adventure in one
+                                place.
+                            </p>
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-2">
+                            {actionableQuotes >
+                                0 && (
+                                    <div className="rounded-2xl border border-coral/20 bg-coral/[0.06] px-4 py-3">
+                                        <div className="flex items-center gap-2">
+                                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-coral text-xs font-bold text-white">
+                                            {
+                                                actionableQuotes
+                                            }
+                                        </span>
+
+                                            <div>
+                                                <p className="text-xs font-semibold">
+                                                    Quote
+                                                    {actionableQuotes >
+                                                    1
+                                                        ? "s"
+                                                        : ""}{" "}
+                                                    ready
+                                                </p>
+
+                                                <p className="text-[11px] text-muted-foreground">
+                                                    Needs
+                                                    your
+                                                    review
+                                                </p>
+                                            </div>
                                         </div>
-                                        <p className="mt-1.5 text-sm text-muted-foreground">
-                                            Sent {formatDate(enquiry.createdDate)}
-                                        </p>
                                     </div>
-                                    <StatusBadge status={enquiry.status} />
-                                </CardContent>
-                            </Card>
-                        ))}
+                                )}
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    void loadEnquiries(
+                                        true
+                                    )
+                                }
+                                disabled={
+                                    loading ||
+                                    refreshing
+                                }
+                                aria-label="Refresh enquiries"
+                                className={cn(
+                                    "flex h-11 w-11 items-center justify-center rounded-xl border bg-background",
+                                    "text-muted-foreground transition-all",
+                                    "hover:border-foreground/20 hover:text-foreground",
+                                    "focus-visible:outline-none focus-visible:ring-2",
+                                    "focus-visible:ring-coral/50",
+                                    "disabled:pointer-events-none disabled:opacity-50"
+                                )}
+                            >
+                                <RefreshCw
+                                    className={cn(
+                                        "h-4 w-4",
+                                        refreshing &&
+                                        "animate-spin"
+                                    )}
+                                />
+                            </button>
+                        </div>
                     </div>
+                </div>
+            </motion.header>
+
+            {/* Error */}
+            <AnimatePresence mode="wait">
+                {error && (
+                    <motion.div
+                        initial={{
+                            opacity: 0,
+                            height: 0,
+                            y: -8,
+                        }}
+                        animate={{
+                            opacity: 1,
+                            height: "auto",
+                            y: 0,
+                        }}
+                        exit={{
+                            opacity: 0,
+                            height: 0,
+                            y: -8,
+                        }}
+                        className="mb-6 overflow-hidden"
+                    >
+                        <div
+                            role="alert"
+                            className="flex flex-col gap-4 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                            <div className="flex items-start gap-3">
+                                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+
+                                <div>
+                                    <p className="font-semibold text-destructive">
+                                        Couldn't
+                                        load
+                                        enquiries
+                                    </p>
+
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        {error}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    void loadEnquiries()
+                                }
+                                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-foreground px-3 text-sm font-medium text-background transition hover:opacity-90"
+                            >
+                                <RefreshCw className="h-3.5 w-3.5" />
+
+                                Try again
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Loading */}
+            {loading && (
+                <div
+                    className="space-y-5"
+                    aria-busy="true"
+                >
+                    <EnquirySkeleton />
+
+                    <EnquirySkeleton />
+                </div>
+            )}
+
+            {/* Empty */}
+            {!loading &&
+                !error &&
+                enquiries.length === 0 && (
+                    <EmptyState />
                 )}
 
-                {totalPages > 1 && (
-                    <div className="flex justify-center gap-2 pt-2">
-                        <Button variant="outline" size="sm" onClick={() => load(page - 1)} disabled={page === 0 || isLoading}>
-                            Previous
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => load(page + 1)} disabled={page + 1 >= totalPages || isLoading}>
-                            Next
-                        </Button>
-                    </div>
+            {/* Enquiries */}
+            {!loading &&
+                enquiries.length > 0 && (
+                    <motion.div
+                        layout
+                        className="space-y-5"
+                        aria-live="polite"
+                    >
+                        <AnimatePresence mode="popLayout">
+                            {enquiries.map(
+                                (enquiry) => (
+                                    <EnquiryCard
+                                        key={
+                                            enquiry.id
+                                        }
+                                        enquiry={
+                                            enquiry
+                                        }
+                                        onQuote={
+                                            handleQuote
+                                        }
+                                        onDownloadQuote={(
+                                            currentEnquiry,
+                                            quote
+                                        ) =>
+                                            void handleDownloadQuotePdf(
+                                                currentEnquiry,
+                                                quote
+                                            )
+                                        }
+                                        downloadingQuoteId={
+                                            downloadingQuoteId
+                                        }
+                                    />
+                                )
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
                 )}
-            </div>
-        </PageShell>
+
+            {/* Bottom reassurance */}
+            {!loading &&
+                enquiries.length > 0 && (
+                    <motion.div
+                        initial={
+                            shouldReduceMotion
+                                ? false
+                                : {
+                                    opacity: 0,
+                                }
+                        }
+                        animate={
+                            shouldReduceMotion
+                                ? undefined
+                                : {
+                                    opacity: 1,
+                                }
+                        }
+                        transition={{
+                            delay: 0.2,
+                        }}
+                        className="mt-8 flex items-center justify-center gap-2 text-center text-xs text-muted-foreground"
+                    >
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+
+                        Your enquiry
+                        information is
+                        securely associated
+                        with your account.
+                    </motion.div>
+                )}
+        </div>
     );
 }

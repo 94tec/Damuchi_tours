@@ -181,14 +181,14 @@ export function WelcomeBackBand() {
                             "
                         >
                             <ActionCard
-                                href="/enquiries-overview"
+                                href="/me/enquiries"
                                 title="My Enquiries"
                                 subtitle="Track requests"
                                 icon={MessagesSquare}
                             />
 
                             <ActionCard
-                                href="/wishlist"
+                                href="/me/wishlist"
                                 title="Saved Tours"
                                 subtitle="Your wishlist"
                                 icon={Heart}

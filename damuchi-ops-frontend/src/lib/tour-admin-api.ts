@@ -97,12 +97,6 @@ export const tourAdminApi = {
         await apiClient.delete(`/tours/${id}`);
     },
 
-    async getUpcomingAvailability(tourId: string): Promise<AvailabilitySummary[]> {
-        const response = await apiClient.get<AvailabilitySummary[]>(`/tours/${tourId}/availability`);
-        return response.data;
-    },
-
-
     async revenue(): Promise<RevenueDashboardResponse> {
         const response = await apiClient.get<RevenueDashboardResponse>(
             "/admin/dashboard/revenue",

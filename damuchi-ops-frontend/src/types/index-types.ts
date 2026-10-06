@@ -68,6 +68,12 @@ export type BookingStatus =
     | "CONFIRMED"
     | "CANCELLED"
     | "COMPLETED"
+    | "NO_SHOW";
+
+export type PaymentStatus =
+    | "UNPAID"
+    | "PARTIALLY_PAID"
+    | "PAID"
     | "REFUNDED";
 
 export interface Traveler {
@@ -80,26 +86,45 @@ export interface Traveler {
 
 export interface Booking {
     id: string;
+
     customerId: string;
     customerEmail: string;
     customerName: string;
+
     tourId: string;
     tourName: string;
     tourDate: string;
+
     travelerCount: number;
+    numberOfAdults: number;
+    numberOfChildren: number;
     travelers: Traveler[];
+
     pricePerTraveler: number;
+    subtotal: number;
+    discount: number;
     totalPrice: number;
     currency: string;
-    status: BookingStatus;
-    statusDescription: string;
+
+    depositAmount: number;
+    amountPaid: number;
+    balanceAmount: number;
+
+    paymentStatus: PaymentStatus;
     paymentReference?: string;
     paidAt?: string;
+
+    status: BookingStatus;
+    statusDescription: string;
+
     cancelledAt?: string;
     cancellationReason?: string;
+
     refundReference?: string;
     refundedAt?: string;
+
     specialRequests?: string;
+
     createdDate: string;
     lastModifiedDate: string;
 }

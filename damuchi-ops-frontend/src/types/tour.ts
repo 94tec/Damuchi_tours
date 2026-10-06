@@ -1,26 +1,7 @@
 // ─── Enums — mirror backend exactly ─────────────────────────────────────────
+import { TourDifficulty, TourCategory} from "@/types/tour-admin";
 
-export type TourCategory =
-  | "SAFARI"
-  | "DAY_TRIP"
-  | "CULTURAL"
-  | "ADVENTURE"
-  | "BEACH"
-  | "MOUNTAIN"
-  | "WILDLIFE"
-  | "CITY_TOUR"
-  | "PHOTOGRAPHY"
-  | "FAMILY"
-  | "CRUISE"
-  | "LUXURY"
-  | "HONEYMOON"
-  | "GROUP";
 
-export type TourDifficulty =
-  | "EASY"
-  | "MODERATE"
-  | "CHALLENGING"
-  | "STRENUOUS";
 
 // ─── Display maps ────────────────────────────────────────────────────────────
 
