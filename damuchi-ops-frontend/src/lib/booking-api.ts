@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api-client";
-import type { ApiResponse, Booking, BookingStats, BookingStatus, CreateBookingRequest } from "@/types/index-types";
+import type { ApiResponse, Booking, BookingStats, BookingStatus, CreateBookingRequest } from "@/types";
 
 export const bookingApi = {
   // ── Customer ────────────────────────────────────────────────────────────────
@@ -46,53 +46,16 @@ export const bookingApi = {
   },
 
   byTour: async (tourId: string): Promise<Booking[]> => {
-    const res = await apiClient.get<Booking[]>(
-        `/bookings/by-enquire-button.tsx/${tourId}`
-    );
-
+    const res = await apiClient.get<Booking[]>(`/bookings/by-tour/${tourId}`);
     return res.data;
   },
 
-  /**
-   * Manually confirm a booking without recording payment.
-   *
-   * Backend:
-   * POST /api/bookings/{bookingId}/confirm
-   */
-  manualConfirm: async (id: string): Promise<Booking> => {
+  confirm: async (id: string, paymentReference: string): Promise<Booking> => {
     const res = await apiClient.post<ApiResponse<Booking>>(
-        `/bookings/${id}/confirm`
+      `/bookings/${id}/confirm`,
+      null,
+      { params: { paymentReference } }
     );
-
-    return res.data.data;
-  },
-  /**
-   * Record a manually reconciled payment.
-   *
-   * Backend:
-   * POST /api/bookings/{bookingId}/payments
-   * ?amount=...
-   * &paymentReference=...
-   *
-   * A PENDING_PAYMENT booking is automatically confirmed
-   * by Booking.recordPayment().
-   */
-  recordPayment: async (
-      id: string,
-      amount: number,
-      paymentReference: string
-  ): Promise<Booking> => {
-    const res = await apiClient.post<ApiResponse<Booking>>(
-        `/bookings/${id}/payments`,
-        null,
-        {
-          params: {
-            amount,
-            paymentReference,
-          },
-        }
-    );
-
     return res.data.data;
   },
 
@@ -107,20 +70,6 @@ export const bookingApi = {
 
   complete: async (id: string): Promise<Booking> => {
     const res = await apiClient.post<ApiResponse<Booking>>(`/bookings/${id}/complete`);
-    return res.data.data;
-  },
-
-  /**
-   * Mark a CONFIRMED booking as NO_SHOW.
-   *
-   * Backend:
-   * POST /api/bookings/{bookingId}/no-show
-   */
-  markNoShow: async (id: string): Promise<Booking> => {
-    const res = await apiClient.post<ApiResponse<Booking>>(
-        `/bookings/${id}/no-show`
-    );
-
     return res.data.data;
   },
 

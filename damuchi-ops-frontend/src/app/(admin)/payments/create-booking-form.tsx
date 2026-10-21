@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 
 import { paymentApi } from "@/lib/payment-api";
-import { availabilityApi } from "@/lib/availability-api";
+import { tourAdminApi } from "@/lib/tour-admin-api";
 import type { AvailabilitySummary } from "@/types/tour-admin";
 import type {
     BookingCreatedResponse, PaymentSubmissionResponse, TravelerInfo,
@@ -51,8 +51,7 @@ export function CreateBookingForm({ submission, onCreated, onCancel }: Props) {
 
     useEffect(() => {
         let cancelled = false;
-
-        availabilityApi
+        tourAdminApi
             .getUpcomingAvailability(submission.tourId)
             .then((data) => { if (!cancelled) setSlots(data); })
             .catch((err) => toast.error((err as ApiError)?.message || "Couldn't load departure dates."))

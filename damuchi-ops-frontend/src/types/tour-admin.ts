@@ -17,18 +17,13 @@ export type TourCategory =
     | "HONEYMOON"
     | "GROUP";
 
-
-export type TourDifficulty =
-    | "EASY"
-    | "MODERATE"
-    | "CHALLENGING"
-    | "STRENUOUS";
+export type TourDifficulty = "EASY" | "MODERATE" | "CHALLENGING" | "DIFFICULT" | "STRENUOUS";
 
 export type TourPriceType = "PER_PERSON" | "PER_GROUP" | "PER_ROOM";
 
 export type TourCurrency = "KES" | "USD" | "EUR" | "GBP";
 
-export interface TourAdminSummary {
+export interface TourSummary {
     id: string;
     name: string;
     slug: string;
@@ -44,7 +39,7 @@ export interface TourAdminSummary {
     averageRating: number;
     reviewCount: number;
     featured: boolean;
-    active: boolean;
+    active: boolean; // present on the entity; include if your TourSummaryResponse exposes it for admin use
 }
 
 export interface TourDetail {
@@ -130,25 +125,6 @@ export interface CreateTourPayload {
     active?: boolean;
     featured?: boolean;
 }
-
-export enum AvailabilityStatus {
-    OPEN = "OPEN",
-    LIMITED = "LIMITED",
-    FULL = "FULL",
-    CLOSED = "CLOSED",
-    CANCELLED = "CANCELLED",
-}
-
-// Companion dictionary to mimic the Java description property
-export const AvailabilityStatusDescriptions: Record<AvailabilityStatus, string> = {
-    [AvailabilityStatus.OPEN]: "Accepting bookings",
-    [AvailabilityStatus.LIMITED]: "Filling up — few slots remaining",
-    [AvailabilityStatus.FULL]: "No slots remaining",
-    [AvailabilityStatus.CLOSED]: "Closed by staff — not accepting bookings",
-    [AvailabilityStatus.CANCELLED]: "Tour date cancelled",
-};
-
-
 export interface AvailabilitySummary {
     id: string;
     tourId: string;
@@ -165,7 +141,7 @@ export interface AvailabilitySummary {
 export type UpdateTourPayload = Partial<CreateTourPayload>;
 
 export interface PagedTours {
-    content: TourAdminSummary[];
+    content: TourSummary[];
     totalPages: number;
     totalElements: number;
     number: number;

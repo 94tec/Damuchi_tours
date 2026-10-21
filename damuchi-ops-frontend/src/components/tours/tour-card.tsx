@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import {
@@ -11,7 +12,7 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { SaveToWishlistButton } from "@/components/tours/save-to-wishlist-button";
+import { Button } from "@/components/ui/button";
 import {
     CATEGORY_LABELS,
     CATEGORY_EMOJI,
@@ -20,7 +21,7 @@ import {
 } from "@/types/tour";
 import {EnquiryModal} from "@/components/landing/enquiry/enquiry-modal";
 
-const DIFFICULTY_VARIANTS = {
+const DIFFICULTY_VARIANT = {
     EASY: "success",
     MODERATE: "secondary",
     CHALLENGING: "warning",
@@ -237,12 +238,6 @@ export function TourCard({ tour }: TourCardProps) {
                         </div>
                     )}
 
-                    <div className="absolute right-3 top-3 z-20">
-                        <SaveToWishlistButton
-                            tourId={tour.id}
-                        />
-                    </div>
-
                     {/* ========================================
                         TOP LEFT — CATEGORY
                     ======================================== */}
@@ -429,7 +424,7 @@ export function TourCard({ tour }: TourCardProps) {
                     ======================================== */}
                     <div className="mt-4 flex min-w-0 flex-wrap gap-1.5">
                         <Badge
-                            variant={DIFFICULTY_VARIANTS[tour.difficulty] ?? "outline"}
+                            variant={DIFFICULTY_VARIANT[tour.difficulty]}
                             className="
                                 max-w-full
                                 truncate
