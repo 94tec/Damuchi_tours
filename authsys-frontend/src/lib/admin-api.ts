@@ -171,9 +171,7 @@ export const adminApi = {
     ).data,
 
   // ── AdminRolePermissionController ───────────────────────────
-
-
-  getAllRolePermissions: async (): Promise<{ role: string; permissions: unknown; permissionCount: any }[]> => {
+  getAllRolePermissions: async (): Promise<RolePermissions[]> => {
       const { data } = await apiClient.get<{
           success: boolean;
           data: Record<string, string[]>;
@@ -182,7 +180,7 @@ export const adminApi = {
       }>("/admin/access/roles");
 
       return Object.entries(data.data).map(([role, permissions]) => ({
-          role,
+          role: role as Role,                          // ← cast string → Role
           permissions,
           permissionCount: permissions.length,
       }));

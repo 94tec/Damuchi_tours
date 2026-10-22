@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { adminApi } from "@/lib/admin-api";
-import type { ApiError, RolePermissions } from "@/types/auth";
+import type {ApiError, Role, RolePermissions} from "@/types/auth";
 
 // Hierarchy order — mirrors AdminRolePermissionController's documented role levels.
 const ROLE_ORDER = ["SUPER_ADMIN", "ADMIN", "OPERATOR", "MANAGER", "USER", "GUEST"] as const;
@@ -102,7 +102,12 @@ export default function RolesPage() {
     setError(null);
     try {
       const data = await adminApi.getAllRolePermissions();
-      setRoles(data);
+      const typed: RolePermissions[] = data.map((item) => ({
+        role: item.role as Role,
+        permissions: Array.isArray(item.permissions) ? (item.permissions as string[]) : [],
+        permissionCount: typeof item.permissionCount === "number" ? item.permissionCount : 0,
+      }));
+      setRoles(typed);
     } catch (err) {
       const message = (err as ApiError).message || "Couldn't load role permissions.";
       setError(message);
