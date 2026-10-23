@@ -51,7 +51,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ── 2. Root → always allow (page.tsx will redirect to /login) ──
+  // ── 2. Root → always allow (login-form.tsx will redirect to /login) ──
   if (pathname === "/") {
     return NextResponse.next();
   }
