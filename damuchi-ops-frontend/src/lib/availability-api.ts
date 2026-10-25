@@ -1,9 +1,6 @@
 // lib/availability-api.ts
 import { apiClient } from "@/lib/api-client";
-import type { AvailabilityStatus } from "@/types/tour-admin";
-import type {
-    AvailabilitySummary
-} from "@/types/tour-admin";
+import type { AvailabilityStatus } from "@/types/index-types";
 
 export interface AvailabilityResponse {
     id: string;
@@ -24,6 +21,17 @@ export interface AvailabilityResponse {
     internalNotes?: string;
     createdDate?: string;
     lastModifiedDate?: string;
+}
+
+// Matches AvailabilitySummaryResponse exactly — the public, customer-facing
+// endpoint returns only these 6 fields, not the full AvailabilityResponse.
+export interface AvailabilitySummary {
+    id: string;
+    date: string;
+    availableSlots: number;
+    status: AvailabilityStatus;
+    effectivePrice: number;
+    bookingDeadline?: string;
 }
 
 export interface CreateAvailabilityRequest {
@@ -54,8 +62,15 @@ export const availabilityApi = {
         return response.data;
     },
 
+    /**
+     * Public, customer-facing. Returns only OPEN slots — the backend
+     * filters out LIMITED, FULL, CLOSED, CANCELLED entirely for this
+     * endpoint (see AvailabilityService.getUpcomingOpenSlots). For staff
+     * tooling that needs to book against a nearly-full (LIMITED) slot,
+     * use getAllForTour and filter client-side instead — don't use this.
+     */
     async getUpcomingAvailability(tourId: string): Promise<AvailabilitySummary[]> {
-        const response = await apiClient.get<AvailabilitySummary[]>(`/tours/${tourId}/availability`);
+        const response = await apiClient.get<AvailabilitySummary[]>(`/availability/tour/${tourId}`);
         return response.data;
     },
 

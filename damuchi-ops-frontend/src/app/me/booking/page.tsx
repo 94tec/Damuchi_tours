@@ -58,10 +58,10 @@ export default function MyBookingsPage() {
                                 <div className="flex flex-wrap items-center gap-2">
                                     <h3 className="truncate font-semibold text-earth">{booking.tourName}</h3>
                                     <span className={bookingStatusBadgeClass(booking.status)}>{bookingStatusLabel(booking.status)}</span>
-                                    {booking.balanceAmount > 0 && (
+                                    {(booking.balanceAmount ?? 0) > 0 && (
                                         <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-                      <Wallet className="h-2.5 w-2.5" /> Balance due
-                    </span>
+                                            <Wallet className="h-2.5 w-2.5" /> Balance due
+                                         </span>
                                     )}
                                 </div>
                                 <div className="mt-1 flex items-center gap-4 text-sm text-stone">
@@ -71,9 +71,9 @@ export default function MyBookingsPage() {
                             </div>
                             <div className="shrink-0 text-right">
                                 <p className="font-mono font-semibold text-earth">{formatCurrency(booking.totalPrice, booking.currency)}</p>
-                                {booking.balanceAmount > 0 && (
+                                {(booking.balanceAmount ?? 0) > 0 && (
                                     <p className="text-xs font-medium text-amber-700">
-                                        {formatCurrency(booking.balanceAmount, booking.currency)} due
+                                        {formatCurrency(booking.balanceAmount ?? 0, booking.currency)} due
                                     </p>
                                 )}
                                 <ChevronRight className="ml-auto mt-1 h-4 w-4 text-stone/50" />

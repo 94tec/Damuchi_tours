@@ -135,20 +135,25 @@ export default function BookingDetailPage() {
               </div>
             </div>
           )}
-          {booking.balanceAmount > 0 && (
+          {(booking.balanceAmount ?? 0) > 0 && (
               <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm">
                 <p className="font-medium text-amber-800">
-                  Balance due: {formatCurrency(booking.balanceAmount, booking.currency)}
+                  Balance due: {formatCurrency(booking.balanceAmount ?? 0, booking.currency)}
                 </p>
+
                 <p className="mt-1 text-xs text-amber-700">
-                  Paid so far: {formatCurrency(booking.amountPaid, booking.currency)} of {formatCurrency(booking.totalPrice, booking.currency)}
+                  Paid so far: {formatCurrency(booking.amountPaid ?? 0, booking.currency)} of{" "}
+                  {formatCurrency(booking.totalPrice, booking.currency)}
                 </p>
-                <Link href={`/me/enquiries?booking=${booking.id}`} className="mt-3 inline-block btn-secondary text-xs">
+
+                <Link
+                    href={`/me/enquiries?booking=${booking.id}`}
+                    className="mt-3 inline-block btn-secondary text-xs"
+                >
                   Pay balance
                 </Link>
               </div>
           )}
-
           {/* Special requests */}
           {booking.specialRequests && (
             <div className="mt-6 rounded-lg bg-dust p-4 text-sm">

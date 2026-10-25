@@ -31,7 +31,7 @@ import { bookingApi } from "@/lib/booking-api";
 import {
   bookingStatusLabel, formatCurrency, formatDateShort, formatDateTime,
 } from "@/lib/utils";
-import type { ApiError, Booking, BookingStatus } from "@/types";
+import type { ApiError, Booking, BookingStatus } from "@/types/index-types";
 
 const STATUSES: { value: BookingStatus | "ALL"; label: string }[] = [
   { value: "ALL",              label: "All bookings" },

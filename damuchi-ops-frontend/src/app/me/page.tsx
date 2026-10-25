@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { enquiryApi } from "@/lib/enquiry-api";
 import { bookingApi } from "@/lib/booking-api";
 import { formatCurrency } from "@/lib/utils";
-import type { ApiError } from "@/types/index-types";
+import type {ApiError, Booking} from "@/types/index-types";
 
 export default function MeOverviewPage() {
     const [needsAction, setNeedsAction] = useState<{ id: string; tourName: string; label: string }[]>([]);
@@ -33,8 +33,15 @@ export default function MeOverviewPage() {
 
                 setBalanceDue(
                     bookings
-                        .filter((b) => b.balanceAmount > 0)
-                        .map((b) => ({ id: b.id, tourName: b.tourName, amount: b.balanceAmount, currency: b.currency }))
+                        .filter((b): b is Booking & { balanceAmount: number } =>
+                            typeof b.balanceAmount === "number" && b.balanceAmount > 0
+                        )
+                        .map((b) => ({
+                            id: b.id,
+                            tourName: b.tourName,
+                            amount: b.balanceAmount,
+                            currency: b.currency,
+                        }))
                 );
             } catch (err) {
                 toast.error((err as ApiError)?.message || "Couldn't load your overview.");
