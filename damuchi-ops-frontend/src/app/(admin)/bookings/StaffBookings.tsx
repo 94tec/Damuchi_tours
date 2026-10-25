@@ -56,7 +56,7 @@ const STATUS_BADGE: Record<BookingStatus, "success" | "warning" | "destructive" 
   REFUNDED: "secondary",
 };
 
-export default function StaffBookingsPage() {
+export default function StaffBookings() {
   const searchParams = useSearchParams();
   const initialStatus = (searchParams.get("status") as BookingStatus | null) ?? "ALL";
 
