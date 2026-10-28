@@ -30,7 +30,7 @@ Next.js 14 + TypeScript + Tailwind CSS + shadcn/ui frontend for the **authSys** 
 
 ```bash
 npm install
-cp .env.local.example .env.local   # or use .env.local already provided
+cp .enwv.local.example .enwv.local   # or use .enwv.local already provided
 npm run dev
 ```
 

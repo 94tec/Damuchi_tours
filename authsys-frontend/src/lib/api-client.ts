@@ -148,7 +148,7 @@ export function normalizeError(error: AxiosError<ApiError>): ApiError {
       message:
           "Can't reach the server. Check: (1) authSys running on port 8001, " +
           "(2) CORS allows http://localhost:3000, " +
-          "(3) NEXT_PUBLIC_API_BASE_URL in .env.local is correct.",
+          "(3) NEXT_PUBLIC_API_BASE_URL in .enwv.local is correct.",
       timestamp: new Date().toISOString(),
     };
   }
