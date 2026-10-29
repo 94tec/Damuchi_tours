@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { AuthLayout } from "@/components/auth/auth-layout";
 import { GoogleButton } from "@/components/auth/google-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +40,7 @@ import { authApi } from "@/lib/auth-api";
 import { ssoApi } from "@/lib/sso-api";
 import { TOUR_PORTAL_URL } from "@/lib/portals";
 import { useAuthStore } from "@/store/auth-store";
-import type { ApiError } from "@/types/auth";
+import { getLoginErrorMessage, GENERIC_LOGIN_ERROR } from "@/lib/auth/login-error";
 import {
   buildHandoffUrl,
   isSameOriginRedirect,
@@ -334,21 +333,12 @@ export default function LoginForm() {
       );
 
       setIsSubmitting(false);
-    } catch (err) {
-      const e = err as ApiError;
-
-      if (e.status === 0) {
-        toast.error(
-            "Can't reach the server. Make sure authSys is running on port 8001 and CORS allows http://localhost:3000."
-        );
-      } else {
-        toast.error(
-            e.message ||
-            "Couldn't sign in. Check your details and try again."
-        );
-      }
-
+    }
+    catch (err) {
+      console.error("Login failed:", err); // full detail stays in the console
+      toast.error(getLoginErrorMessage(err));
       setIsSubmitting(false);
+
     }
   }
 

@@ -23,7 +23,7 @@ const TRUSTED_REDIRECT_ORIGINS: string[] = [
 const STAFF_PERMISSIONS = ["MANAGE_TOURS", "MANAGE_BOOKINGS", "MANAGE_AVAILABILITY"];
 const SYSTEM_ADMIN_PERMISSIONS = ["MANAGE_USERS", "MANAGE_ROLES", "MANAGE_SECURITY"];
 
-const OPS_BASE_URL = process.env.NEXT_PUBLIC_OPS_URL ?? "http://localhost:3001";
+const OPS_BASE_URL = process.env.NEXT_PUBLIC_TOUR_PORTAL_URL ?? "http://localhost:3001";
 
 export type Destination = { crossOrigin: boolean; url: string };
 
