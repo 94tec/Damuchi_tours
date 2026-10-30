@@ -436,7 +436,7 @@ export default function LoginForm() {
 
                     <div>
                       <p className="font-display text-lg font-semibold tracking-tight text-white">
-                        Damuchi Safaris
+                        Kivana Trails & Safaris
                       </p>
 
                       <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">
@@ -495,7 +495,7 @@ export default function LoginForm() {
                 {/* Footer */}
                 <div className="flex items-center justify-between border-t border-white/[0.06] pt-6 text-[10px] text-white/25">
                 <span>
-                  © {new Date().getFullYear()} Damuchi Safaris
+                  © {new Date().getFullYear()} Kivana Trails & Safaris
                 </span>
 
                   <div className="flex items-center gap-2">
@@ -525,7 +525,7 @@ export default function LoginForm() {
 
                     <div>
                       <p className="font-display text-base font-semibold text-white">
-                        Damuchi Safaris
+                        Kivana Trails & Safaris
                       </p>
 
                       <p className="text-[9px] uppercase tracking-[0.18em] text-white/30">

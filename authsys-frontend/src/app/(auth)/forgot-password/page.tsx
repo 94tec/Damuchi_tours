@@ -266,7 +266,7 @@ export default function ForgotPasswordPage() {
 
                   <div>
                     <p className="font-display text-lg font-semibold tracking-tight text-white">
-                      Damuchi Safaris
+                      Kivana Trails & Safaris
                     </p>
 
                     <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">
@@ -325,7 +325,7 @@ export default function ForgotPasswordPage() {
                 <p className="mt-6 max-w-[450px] text-sm leading-7 text-white/40">
                   Forgot your password? No problem. We'll help
                   you securely recover your account and get back
-                  to the Damuchi Safaris platform.
+                  to the Kivana Trails & Safaris platform.
                 </p>
 
                 {/* =======================================================
@@ -395,7 +395,7 @@ export default function ForgotPasswordPage() {
                 "
               >
                 <span>
-                  © {new Date().getFullYear()} Damuchi Safaris
+                  © {new Date().getFullYear()} Kivana Safaris
                 </span>
 
                 <div className="flex items-center gap-2">
@@ -482,7 +482,7 @@ export default function ForgotPasswordPage() {
 
                   <div>
                     <p className="font-display text-base font-semibold text-white">
-                      Damuchi Safaris
+                      Kivana Trails & Safaris
                     </p>
 
                     <p className="text-[9px] uppercase tracking-[0.18em] text-white/30">

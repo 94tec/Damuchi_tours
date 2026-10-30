@@ -247,7 +247,7 @@ export default function SetupPasswordPage() {
 
                   <div>
                     <p className="text-sm font-semibold tracking-tight text-white">
-                      Damuchi Safaris
+                      Kivana Trails & Safaris
                     </p>
 
                     <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">
@@ -317,7 +317,7 @@ export default function SetupPasswordPage() {
 
                   <div className="mt-8 flex items-center justify-between border-t border-white/[0.06] pt-6">
                     <p className="text-[11px] text-white/25">
-                      © {new Date().getFullYear()} Damuchi Safaris
+                      © {new Date().getFullYear()} Kivana Trails & Safaris
                     </p>
 
                     <div className="flex items-center gap-2 text-[11px] text-emerald-400/75">
@@ -344,7 +344,7 @@ export default function SetupPasswordPage() {
 
                   <div>
                     <p className="text-sm font-semibold tracking-tight text-white">
-                      Damuchi Safaris
+                      Kivana Trails & Safaris
                     </p>
 
                     <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">

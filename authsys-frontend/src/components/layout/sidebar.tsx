@@ -67,7 +67,7 @@ export function Sidebar() {
             <Compass className="h-4 w-4 text-expedition-clay" strokeWidth={1.75} />
           </div>
           <div>
-            <p className="font-display text-sm font-medium leading-tight">Damuchi Safaris</p>
+            <p className="font-display text-sm font-medium leading-tight">Kivana Trails & Safaris</p>
             <p className="font-mono text-[10px] text-muted-foreground">
               {admin ? (superAdmin ? "Super Admin" : "Admin") : "Staff Portal"}
             </p>
@@ -121,7 +121,7 @@ export function Sidebar() {
         {/* Footer */}
         <div className="border-t border-border p-4">
           <p className="font-mono text-[10px] text-muted-foreground/60">
-            Port 8001 · authSys v1.0
+            Kivana Trails & Safaris · authSys v1.0
           </p>
         </div>
       </aside>

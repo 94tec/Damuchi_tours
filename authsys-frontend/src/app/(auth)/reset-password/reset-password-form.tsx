@@ -190,7 +190,7 @@ export default function ResetPasswordForm() {
 
                   <div>
                     <p className="text-sm font-semibold tracking-tight text-white">
-                      Damuchi Safaris
+                      Kivana Trails & Safaris
                     </p>
                     <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">
                       Operations Platform
@@ -215,7 +215,7 @@ export default function ResetPasswordForm() {
 
                     <p className="mt-6 max-w-[470px] text-sm leading-7 text-white/45">
                       Use your secure, time-limited reset link to create a new
-                      password and get back to your Damuchi Safaris account.
+                      password and get back to your Kivana Trails & Safaris account.
                     </p>
                   </div>
 
@@ -265,7 +265,7 @@ export default function ResetPasswordForm() {
 
                   <div className="mt-8 flex items-center justify-between border-t border-white/[0.06] pt-6">
                     <p className="text-[11px] text-white/25">
-                      © {new Date().getFullYear()} Damuchi Safaris
+                      © {new Date().getFullYear()} Kivana Trails & Safaris
                     </p>
 
                     <div className="flex items-center gap-2 text-[11px] text-emerald-400/75">
@@ -292,7 +292,7 @@ export default function ResetPasswordForm() {
 
                   <div>
                     <p className="text-sm font-semibold tracking-tight text-white">
-                      Damuchi Safaris
+                      Kivana Trails & Safaris
                     </p>
                     <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">
                       Operations Platform

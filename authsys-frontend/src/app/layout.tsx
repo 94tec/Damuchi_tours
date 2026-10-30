@@ -25,8 +25,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Damuchi Safaris | Internal Staff Portal",
-    template: "%s | Damuchi Safaris Access",
+    default: "Kivana Trails & Safaris | Internal Staff Portal",
+    template: "%s | Kivana Trails & Safaris Access",
   },
   description: "Secure staff access and enquire-button.tsx management portal.",
   robots: {

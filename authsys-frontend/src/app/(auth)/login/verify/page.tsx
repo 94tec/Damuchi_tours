@@ -217,7 +217,7 @@ linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)
 
                     <div>
                       <p className="text-sm font-semibold tracking-wide text-white">
-                        Damuchi Safaris
+                        Kivana Trails & Safaris
                       </p>
 
                       <p className="text-[10px] uppercase tracking-[0.18em] text-white/30">
@@ -289,7 +289,7 @@ linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)
 
                     <div>
                       <p className="text-sm font-semibold tracking-wide">
-                        Damuchi Safaris
+                        Kivana Trails & Safaris
                       </p>
 
                       <p className="text-[10px] uppercase tracking-[0.18em] text-white/30">

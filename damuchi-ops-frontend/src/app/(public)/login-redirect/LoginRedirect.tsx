@@ -2,12 +2,8 @@
 
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-
-const AUTH_FRONTEND_URL =
-  process.env.NEXT_PUBLIC_AUTH_FRONTEND_URL ?? "http://localhost:3000";
-
-const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+const AUTH_FRONTEND_URL = process.env.NEXT_PUBLIC_AUTH_SYSTEM_URL ?? "http://localhost:3000";
+const APP_URL = process.env.NEXT_PUBLIC_TOUR_PORTAL_URL ?? "http://localhost:3001";
 
 /**
  * LoginRedirectPage

@@ -109,7 +109,7 @@ linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)
 
                     <div>
                       <p className="text-sm font-semibold tracking-wide text-white">
-                        Damuchi Safaris
+                        Kivana Trails & Safaris
                       </p>
                       <p className="text-[10px] uppercase tracking-[0.18em] text-white/30">
                         Operations Platform
@@ -180,7 +180,7 @@ linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)
 
                     <div>
                       <p className="text-sm font-semibold tracking-wide">
-                        Damuchi Safaris
+                        Kivana Trails & Safaris
                       </p>
                       <p className="text-[10px] uppercase tracking-[0.18em] text-white/30">
                         Operations Platform
@@ -238,7 +238,7 @@ linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)
                         </p>
 
                         <p className="mt-1.5 text-xs leading-5 text-white/35">
-                          Look for an activation email from Damuchi Safaris.
+                          Look for an activation email from Kivana Trails & Safaris.
                           If you don&apos;t see it, check your spam or junk
                           folder.
                         </p>

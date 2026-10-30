@@ -219,7 +219,7 @@ export default function SetupCompletePage() {
 
                   <div>
                     <p className="text-sm font-semibold tracking-tight text-white">
-                      Damuchi Safaris
+                      Kivana Trails & Safaris
                     </p>
 
                     <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">
@@ -241,14 +241,14 @@ export default function SetupCompletePage() {
                       Your account is ready.
                       <br />
                       <span className="text-white/45">
-                        Welcome to Damuchi.
+                        Welcome to Kivana Trails.
                       </span>
                     </h1>
 
                     <p className="mt-6 max-w-[470px] text-sm leading-7 text-white/45">
                       We’re finishing your account activation now. Once
                       complete, you’ll be ready to sign in and start using the
-                      Damuchi Safaris platform.
+                      Kivana Trails & Safaris platform.
                     </p>
                   </div>
 
@@ -281,7 +281,7 @@ export default function SetupCompletePage() {
 
                   <div className="mt-8 flex items-center justify-between border-t border-white/[0.06] pt-6">
                     <p className="text-[11px] text-white/25">
-                      © {new Date().getFullYear()} Damuchi Safaris
+                      © {new Date().getFullYear()} Kivana Trails & Safaris
                     </p>
 
                     <div className="flex items-center gap-2 text-[11px] text-emerald-400/75">
@@ -308,7 +308,7 @@ export default function SetupCompletePage() {
 
                   <div>
                     <p className="text-sm font-semibold tracking-tight text-white">
-                      Damuchi Safaris
+                      Kivana Trails & Safaris
                     </p>
 
                     <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">

@@ -261,7 +261,7 @@ linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)
 
                     <div>
                       <p className="text-sm font-semibold tracking-wide text-white">
-                        Damuchi Safaris
+                        Kivana Trails & Safaris
                       </p>
                       <p className="text-[10px] uppercase tracking-[0.18em] text-white/30">
                         Operations Platform
@@ -338,7 +338,7 @@ linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)
 
                     <div>
                       <p className="text-sm font-semibold tracking-wide">
-                        Damuchi Safaris
+                        Kivana Trails & Safaris
                       </p>
                       <p className="text-[10px] uppercase tracking-[0.18em] text-white/30">
                         Operations Platform
@@ -453,7 +453,7 @@ linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)
                           Keep your verification code private
                         </p>
                         <p className="mt-1 text-[11px] leading-5 text-white/30">
-                          Damuchi Safaris will never ask you to share your
+                          Kivana Trails & Safaris will never ask you to share your
                           one-time verification code.
                         </p>
                       </div>

@@ -117,7 +117,7 @@ export default function RegistrationSubmittedForm() {
 
                     <div>
                       <p className="text-sm font-semibold tracking-wide text-white">
-                        Damuchi Safaris
+                        Kivana Trails & Safaris
                       </p>
 
                       <p className="text-[10px] uppercase tracking-[0.18em] text-white/30">
@@ -189,7 +189,7 @@ export default function RegistrationSubmittedForm() {
 
                     <div>
                       <p className="text-sm font-semibold tracking-wide">
-                        Damuchi Safaris
+                        Kivana Trails & Safaris
                       </p>
 
                       <p className="text-[10px] uppercase tracking-[0.18em] text-white/30">
