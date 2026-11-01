@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import {useEffect, useRef, useState} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -179,6 +179,16 @@ export default function LoginForm() {
   const [hasHydrated, setHasHydrated] = useState(
       () => useAuthStore.persist.hasHydrated()
   );
+  const params = useSearchParams();
+  const shown = useRef(false);
+
+  useEffect(() => {
+    if (shown.current) return;
+    const reason = params.get("reason");
+    if (reason === "idle") toast.info("You were signed out due to inactivity. Please sign in again.");
+    if (reason === "expired") toast.info("Your session expired. Please sign in again.");
+    shown.current = true;
+  }, [params]);
 
   /* -----------------------------------------------------------------------
      Hydration
@@ -333,8 +343,7 @@ export default function LoginForm() {
       );
 
       setIsSubmitting(false);
-    }
-    catch (err) {
+    } catch (err) {
       console.error("Login failed:", err); // full detail stays in the console
       toast.error(getLoginErrorMessage(err));
       setIsSubmitting(false);
@@ -350,7 +359,8 @@ export default function LoginForm() {
 
         <div className="pointer-events-none absolute inset-0">
           {/* Main gradient */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(255,107,87,.12),transparent_32%),radial-gradient(circle_at_85%_80%,rgba(245,132,31,.09),transparent_30%),linear-gradient(135deg,#07090a_0%,#0d0e10_50%,#08090a_100%)]" />
+          <div
+              className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(255,107,87,.12),transparent_32%),radial-gradient(circle_at_85%_80%,rgba(245,132,31,.09),transparent_30%),linear-gradient(135deg,#07090a_0%,#0d0e10_50%,#08090a_100%)]"/>
 
           {/* Grid */}
           <div
@@ -399,8 +409,10 @@ export default function LoginForm() {
           MAIN
       ================================================================= */}
 
-        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1500px] items-center px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
-          <div className="mx-auto grid w-full max-w-[1180px] overflow-hidden rounded-[30px] border border-white/[0.08] bg-white/[0.025] shadow-[0_40px_120px_-35px_rgba(0,0,0,.8)] backdrop-blur-xl lg:grid-cols-[1.05fr_.95fr]">
+        <div
+            className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1500px] items-center px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
+          <div
+              className="mx-auto grid w-full max-w-[1180px] overflow-hidden rounded-[30px] border border-white/[0.08] bg-white/[0.025] shadow-[0_40px_120px_-35px_rgba(0,0,0,.8)] backdrop-blur-xl lg:grid-cols-[1.05fr_.95fr]">
 
             {/* =============================================================
               LEFT / BRAND PANEL
@@ -418,20 +430,22 @@ export default function LoginForm() {
             "
             >
               {/* image-like atmosphere */}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_35%,rgba(255,107,87,.16),transparent_35%),radial-gradient(circle_at_75%_75%,rgba(255,145,60,.10),transparent_35%)]" />
+              <div
+                  className="absolute inset-0 bg-[radial-gradient(circle_at_30%_35%,rgba(255,107,87,.16),transparent_35%),radial-gradient(circle_at_75%_75%,rgba(255,145,60,.10),transparent_35%)]"/>
 
               {/* Decorative circles */}
-              <div className="absolute -left-24 top-20 h-72 w-72 rounded-full border border-white/[0.045]" />
-              <div className="absolute -left-16 top-28 h-56 w-56 rounded-full border border-coral/[0.08]" />
-              <div className="absolute -bottom-32 -right-24 h-96 w-96 rounded-full border border-white/[0.04]" />
+              <div className="absolute -left-24 top-20 h-72 w-72 rounded-full border border-white/[0.045]"/>
+              <div className="absolute -left-16 top-28 h-56 w-56 rounded-full border border-coral/[0.08]"/>
+              <div className="absolute -bottom-32 -right-24 h-96 w-96 rounded-full border border-white/[0.04]"/>
 
               <div className="relative flex w-full flex-col justify-between p-10 xl:p-14">
 
                 {/* Brand */}
                 <div className="animate-[loginFadeDown_.7s_ease-out_both]">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-coral/20 bg-coral/[0.08] shadow-[0_10px_35px_-12px_rgba(255,107,87,.5)]">
-                      <MapPin className="h-5 w-5 text-coral" />
+                    <div
+                        className="flex h-11 w-11 items-center justify-center rounded-2xl border border-coral/20 bg-coral/[0.08] shadow-[0_10px_35px_-12px_rgba(255,107,87,.5)]">
+                      <MapPin className="h-5 w-5 text-coral"/>
                     </div>
 
                     <div>
@@ -449,8 +463,9 @@ export default function LoginForm() {
                 {/* Hero */}
                 <div className="relative max-w-[510px] animate-[loginHero_.9s_cubic-bezier(.16,1,.3,1)_both]">
 
-                  <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-coral/15 bg-coral/[0.05] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-coral">
-                    <Sparkles className="h-3 w-3" />
+                  <div
+                      className="mb-5 inline-flex items-center gap-2 rounded-full border border-coral/15 bg-coral/[0.05] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-coral">
+                    <Sparkles className="h-3 w-3"/>
 
                     Staff workspace
                   </div>
@@ -473,19 +488,19 @@ export default function LoginForm() {
                   {/* Stats */}
                   <div className="mt-10 grid max-w-[430px] grid-cols-3 gap-3">
                     <FeatureStat
-                        icon={<Globe2 className="h-4 w-4" />}
+                        icon={<Globe2 className="h-4 w-4"/>}
                         value="Global"
                         label="Operations"
                     />
 
                     <FeatureStat
-                        icon={<Users className="h-4 w-4" />}
+                        icon={<Users className="h-4 w-4"/>}
                         value="Secure"
                         label="Team access"
                     />
 
                     <FeatureStat
-                        icon={<ShieldCheck className="h-4 w-4" />}
+                        icon={<ShieldCheck className="h-4 w-4"/>}
                         value="24/7"
                         label="Protection"
                     />
@@ -493,13 +508,14 @@ export default function LoginForm() {
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between border-t border-white/[0.06] pt-6 text-[10px] text-white/25">
+                <div
+                    className="flex items-center justify-between border-t border-white/[0.06] pt-6 text-[10px] text-white/25">
                 <span>
                   © {new Date().getFullYear()} Kivana Trails & Safaris
                 </span>
 
                   <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(74,222,128,.6)]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(74,222,128,.6)]"/>
                     Systems operational
                   </div>
                 </div>
@@ -510,17 +526,20 @@ export default function LoginForm() {
               RIGHT / LOGIN
           ============================================================= */}
 
-            <section className="relative flex min-h-[620px] items-center justify-center px-5 py-10 sm:px-8 lg:px-12 xl:px-16">
+            <section
+                className="relative flex min-h-[620px] items-center justify-center px-5 py-10 sm:px-8 lg:px-12 xl:px-16">
               {/* subtle top glow */}
-              <div className="pointer-events-none absolute left-1/2 top-0 h-40 w-72 -translate-x-1/2 rounded-full bg-coral/[0.055] blur-[70px]" />
+              <div
+                  className="pointer-events-none absolute left-1/2 top-0 h-40 w-72 -translate-x-1/2 rounded-full bg-coral/[0.055] blur-[70px]"/>
 
               <div className="relative w-full max-w-[400px] animate-[loginCard_.8s_cubic-bezier(.16,1,.3,1)_both]">
 
                 {/* Mobile brand */}
                 <div className="mb-9 flex items-center justify-center lg:hidden">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-coral/20 bg-coral/[0.08]">
-                      <MapPin className="h-4.5 w-4.5 text-coral" />
+                    <div
+                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-coral/20 bg-coral/[0.08]">
+                      <MapPin className="h-4.5 w-4.5 text-coral"/>
                     </div>
 
                     <div>
@@ -537,8 +556,9 @@ export default function LoginForm() {
 
                 {/* Heading */}
                 <div className="mb-7 text-center lg:text-left">
-                  <div className="mb-3 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-coral">
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-coral" />
+                  <div
+                      className="mb-3 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-coral">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-coral"/>
                     Staff Portal
                   </div>
 
@@ -552,9 +572,10 @@ export default function LoginForm() {
                 </div>
 
                 {/* Security badge */}
-                <div className="mb-6 flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-4 py-3">
+                <div
+                    className="mb-6 flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-4 py-3">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-400/[0.08]">
-                    <LockKeyhole className="h-3.5 w-3.5 text-emerald-400/80" />
+                    <LockKeyhole className="h-3.5 w-3.5 text-emerald-400/80"/>
                   </div>
 
                   <div className="min-w-0">
@@ -567,23 +588,23 @@ export default function LoginForm() {
                     </p>
                   </div>
 
-                  <CheckCircle2 className="ml-auto h-4 w-4 shrink-0 text-emerald-400/60" />
+                  <CheckCircle2 className="ml-auto h-4 w-4 shrink-0 text-emerald-400/60"/>
                 </div>
 
                 {/* Google */}
                 <div className="login-google">
-                  <GoogleButton label="Continue with Google" />
+                  <GoogleButton label="Continue with Google"/>
                 </div>
 
                 {/* Divider */}
                 <div className="my-6 flex items-center gap-3">
-                  <div className="h-px flex-1 bg-white/[0.07]" />
+                  <div className="h-px flex-1 bg-white/[0.07]"/>
 
                   <span className="text-[10px] uppercase tracking-[0.12em] text-white/25">
                   or continue with email
                 </span>
 
-                  <div className="h-px flex-1 bg-white/[0.07]" />
+                  <div className="h-px flex-1 bg-white/[0.07]"/>
                 </div>
 
                 {/* =========================================================
@@ -599,7 +620,7 @@ export default function LoginForm() {
                     <FormField
                         control={form.control}
                         name="email"
-                        render={({ field }) => (
+                        render={({field}) => (
                             <FormItem>
                               <FormLabel className="text-xs font-medium text-white/65">
                                 Email address
@@ -635,7 +656,7 @@ export default function LoginForm() {
                                 </div>
                               </FormControl>
 
-                              <FormMessage />
+                              <FormMessage/>
                             </FormItem>
                         )}
                     />
@@ -644,7 +665,7 @@ export default function LoginForm() {
                     <FormField
                         control={form.control}
                         name="password"
-                        render={({ field }) => (
+                        render={({field}) => (
                             <FormItem>
                               <div className="flex items-center justify-between">
                                 <FormLabel className="text-xs font-medium text-white/65">
@@ -726,15 +747,15 @@ export default function LoginForm() {
                                       }
                                   >
                                     {showPw ? (
-                                        <EyeOff className="h-4 w-4" />
+                                        <EyeOff className="h-4 w-4"/>
                                     ) : (
-                                        <Eye className="h-4 w-4" />
+                                        <Eye className="h-4 w-4"/>
                                     )}
                                   </button>
                                 </div>
                               </FormControl>
 
-                              <FormMessage />
+                              <FormMessage/>
                             </FormItem>
                         )}
                     />
@@ -763,7 +784,7 @@ export default function LoginForm() {
                         loading={isSubmitting}
                     >
                       {!isSubmitting && (
-                          <LogIn className="h-4 w-4" />
+                          <LogIn className="h-4 w-4"/>
                       )}
 
                       <span>
@@ -773,7 +794,7 @@ export default function LoginForm() {
                     </span>
 
                       {!isSubmitting && (
-                          <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                          <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"/>
                       )}
                     </Button>
                   </form>
@@ -792,7 +813,7 @@ export default function LoginForm() {
 
                 {/* Bottom security */}
                 <div className="mt-8 flex items-center justify-center gap-2 text-[10px] text-white/20">
-                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <ShieldCheck className="h-3.5 w-3.5"/>
                   Protected by secure authentication
                 </div>
               </div>
@@ -879,7 +900,7 @@ export default function LoginForm() {
       `}</style>
       </div>
   );
-}
+};
 
 /* =========================================================================
    Feature stat

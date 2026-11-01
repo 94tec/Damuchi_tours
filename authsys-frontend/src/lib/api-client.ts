@@ -5,6 +5,7 @@ import axios, {
 } from "axios";
 import type { ApiError, TokenPair } from "@/types/auth";
 import { useAuthStore } from "@/store/auth-store";
+import { endSession } from "@/lib/auth/end-session";
 
 // Port 8001 confirmed from startup log: "Netty started on port 8001"
 const API_BASE_URL =
@@ -84,8 +85,7 @@ apiClient.interceptors.response.use(
         const refreshToken = useAuthStore.getState().refreshToken;
 
         if (!refreshToken) {
-          useAuthStore.getState().clearSession();
-          if (typeof window !== "undefined") window.location.href = "/login";
+          endSession("expired");
           return Promise.reject(normalizeError(error));
         }
 
@@ -128,12 +128,12 @@ apiClient.interceptors.response.use(
           }
         } catch {
           drain(null);
-          useAuthStore.getState().clearSession();
-          if (typeof window !== "undefined") window.location.href = "/login";
+          endSession("expired");
           return Promise.reject(normalizeError(error));
         } finally {
           isRefreshing = false;
         }
+
       }
 
       return Promise.reject(normalizeError(error));
