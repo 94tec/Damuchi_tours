@@ -265,6 +265,8 @@ export function EnquiryBand() {
                                     <EnquiryForm
                                         tourId={selectedTour.id}
                                         tourName={selectedTour.name}
+                                        pricePerPerson={selectedTour.price ?? undefined}
+                                        currency={selectedTour.currency ?? undefined}
                                         source="landing-enquiry-band"
                                         onSuccess={() =>
                                             setSelectedTour(null)
