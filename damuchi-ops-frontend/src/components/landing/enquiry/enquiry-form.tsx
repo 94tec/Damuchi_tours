@@ -15,7 +15,6 @@ import {
     ShieldCheck,
     UsersRound,
 } from "lucide-react";
-import { useEffect } from "react";
 import { formatCurrency } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
@@ -75,10 +74,6 @@ export function EnquiryForm({
     source,
     onSuccess,
 }: EnquiryFormProps) {
-    const budgetText =
-        pricePerPerson != null
-            ? `${formatCurrency(pricePerPerson, currency)} per person`
-            : "";
     const form = useForm<EnquiryFormValues>({
         resolver: zodResolver(enquirySchema),
         defaultValues: {
@@ -86,20 +81,12 @@ export function EnquiryForm({
             email: "",
             phone: "",
             tourId,
-            budgetRange: budgetText,
             availabilityId,
             flexibleDates: false,
             consent: false,
             source,
         },
     });
-    // Keep the field in sync if the tour changes, but never
-    // overwrite something the visitor has typed.
-    useEffect(() => {
-        if (!budgetText) return;
-        if (form.getFieldState("budgetRange", form.formState).isDirty) return;
-        form.setValue("budgetRange", budgetText, { shouldDirty: false });
-    }, [budgetText, form]);
 
     const adults = form.watch("groupSizeAdults");
     async function onSubmit(values: EnquiryFormValues) {
@@ -517,7 +504,7 @@ export function EnquiryForm({
                                         <FormControl>
                                             <Input
                                                 {...field}
-                                                placeholder="e.g. KES 150,000 per person"
+                                                placeholder={`e.g. ${currency} 150,000 per person`}
                                                 className={inputClassName}
                                             />
                                         </FormControl>
