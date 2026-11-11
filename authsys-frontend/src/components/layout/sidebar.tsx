@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import {
-  Compass,
   LayoutDashboard,
   Map,
   Users,
@@ -63,11 +63,18 @@ export function Sidebar() {
       <aside className="hidden w-64 flex-col border-r border-border bg-card lg:flex">
         {/* Logo */}
         <div className="flex h-16 items-center gap-2.5 border-b border-border px-6">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-expedition-forest">
-            <Compass className="h-4 w-4 text-expedition-clay" strokeWidth={1.75} />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white p-0.5 ring-1 ring-border/60">
+            <Image
+                src="/images/kivana-logo.png"
+                alt="Kivana Trails and Safaris logo"
+                width={40}
+                height={40}
+                priority
+                className="h-full w-full object-contain"
+            />
           </div>
-          <div>
-            <p className="font-display text-sm font-medium leading-tight">Kivana Trails & Safaris</p>
+          <div className="min-w-0">
+            <p className="truncate font-display text-sm font-medium leading-tight">Kivana Trails &amp; Safaris</p>
             <p className="font-mono text-[10px] text-muted-foreground">
               {admin ? (superAdmin ? "Super Admin" : "Admin") : "Staff Portal"}
             </p>
