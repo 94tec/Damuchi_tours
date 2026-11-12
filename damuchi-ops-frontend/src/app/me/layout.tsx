@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
 import { LayoutDashboard, Inbox, Calendar, Heart, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +18,6 @@ export default function MeLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="flex min-h-screen flex-col bg-background">
-            <Navbar />
             <div className="container flex-1 gap-8 py-10 sm:py-14 lg:grid lg:grid-cols-[200px_1fr]">
                 <nav className="mb-6 flex gap-1 overflow-x-auto lg:mb-0 lg:flex-col lg:gap-0.5">
                     {NAV.map(({ href, label, icon: Icon }) => {
@@ -42,7 +39,6 @@ export default function MeLayout({ children }: { children: React.ReactNode }) {
                 </nav>
                 <main className="min-w-0">{children}</main>
             </div>
-            <Footer />
         </div>
     );
 }
