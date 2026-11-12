@@ -1056,46 +1056,6 @@ export default function MyEnquiriesPage() {
     return (
         <PageShell>
             <div className="mx-auto w-full max-w-5xl space-y-6 sm:space-y-8">
-                {/* Page hero */}
-                <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 px-5 py-7 text-black shadow-lg shadow-forest-950/10 sm:px-8 sm:py-9">
-                    <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full border border-white/[0.08]" />
-                    <div className="pointer-events-none absolute -right-8 -top-12 h-40 w-40 rounded-full border border-white/[0.08]" />
-                    <div className="pointer-events-none absolute bottom-0 right-1/4 h-28 w-28 rounded-full bg-coral/10 blur-3xl" />
-
-                    <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-                        <div className="max-w-xl">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.17em] text-white/75">
-                                <Sparkles className="h-3 w-3 text-coral" />
-                                Your travel workspace
-                            </div>
-
-                            <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-                                My enquiries
-                            </h1>
-
-                            <p className="mt-2 max-w-lg text-sm leading-6 text-white/65 sm:text-base">
-                                Follow your safari plans, review personalised
-                                quotes, and take the next step towards your
-                                next adventure.
-                            </p>
-                        </div>
-
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => load(page)}
-                            disabled={isLoading}
-                            className="h-10 w-full rounded-xl border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white sm:w-auto"
-                        >
-                            <RefreshCw
-                                className={`h-4 w-4 ${
-                                    isLoading ? "animate-spin" : ""
-                                }`}
-                            />
-                            Refresh enquiries
-                        </Button>
-                    </div>
-                </section>
 
                 {/* Attention message */}
                 {!isLoading && hasNeedsAttention && (
@@ -1113,6 +1073,20 @@ export default function MyEnquiriesPage() {
                                 and decide whether to proceed.
                             </p>
                         </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => load(page)}
+                            disabled={isLoading}
+                            className="h-10 w-full rounded-xl border-white/20 bg-white/10 text-coral hover:bg-white/15 hover:text-coral sm:w-auto"
+                        >
+                            <RefreshCw
+                                className={`h-4 w-4 ${
+                                    isLoading ? "animate-spin" : ""
+                                }`}
+                            />
+                            Refresh enquiries
+                        </Button>
                     </div>
                 )}
 
