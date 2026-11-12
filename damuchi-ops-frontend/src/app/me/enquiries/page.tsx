@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -10,7 +9,9 @@ import {
     CalendarDays,
     Check,
     CheckCircle2,
+    ChevronRight,
     Clock3,
+    Copy,
     Inbox,
     Mail,
     MapPin,
@@ -30,14 +31,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 
 import {
     Dialog,
@@ -72,6 +65,15 @@ const FILTERABLE_STATUSES: TourEnquiryStatus[] = [
     "CONVERTED",
     "COMPLETED",
     "LOST",
+];
+
+/** Happy-path journey shown in the progress tracker. */
+const JOURNEY: TourEnquiryStatus[] = [
+    "NEW",
+    "CONTACTED",
+    "QUOTED",
+    "CONVERTED",
+    "COMPLETED",
 ];
 
 const STATUS_COPY: Record<
@@ -112,16 +114,13 @@ const STATUS_STYLES: Record<TourEnquiryStatus, string> = {
     NEW: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-400",
     CONTACTED:
         "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-400",
-    QUOTED:
-        "border-coral/30 bg-coral/10 text-coral dark:border-coral/30 dark:bg-coral/10",
+    QUOTED: "border-coral/30 bg-coral/10 text-coral",
     CONVERTED:
         "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-400",
     COMPLETED:
         "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-900/60 dark:bg-teal-950/30 dark:text-teal-400",
-    LOST:
-        "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-400",
-    ARCHIVED:
-        "border-border bg-muted text-muted-foreground",
+    LOST: "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-400",
+    ARCHIVED: "border-border bg-muted text-muted-foreground",
 };
 
 const STATUS_ICONS: Record<TourEnquiryStatus, React.ElementType> = {
@@ -134,6 +133,9 @@ const STATUS_ICONS: Record<TourEnquiryStatus, React.ElementType> = {
     ARCHIVED: XCircle,
 };
 
+const ENTER =
+    "animate-in fade-in slide-in-from-bottom-2 duration-500 motion-reduce:animate-none";
+
 /* ============================================================
    HELPERS
 ============================================================ */
@@ -144,12 +146,10 @@ function getApiErrorMessage(err: unknown, fallback: string) {
 
 function formatDate(iso?: string) {
     if (!iso) return "—";
-
     const date = new Date(iso);
-
     if (Number.isNaN(date.getTime())) return "—";
 
-    return date.toLocaleDateString(undefined, {
+    return date.toLocaleDateString("en-GB", {
         day: "numeric",
         month: "short",
         year: "numeric",
@@ -160,16 +160,9 @@ function formatAmount(amount: number, currency: string) {
     return `${currency} ${Number(amount || 0).toLocaleString()}`;
 }
 
-async function handleDownloadQuotePdf(
-    enquiryId: string,
-    quoteId: string,
-) {
+async function handleDownloadQuotePdf(enquiryId: string, quoteId: string) {
     try {
-        const blob = await enquiryApi.downloadQuotePdf(
-            enquiryId,
-            quoteId,
-            true,
-        );
+        const blob = await enquiryApi.downloadQuotePdf(enquiryId, quoteId, true);
 
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement("a");
@@ -185,16 +178,22 @@ async function handleDownloadQuotePdf(
 
         toast.success("Your quote PDF has been downloaded.");
     } catch (err) {
-        toast.error(
-            getApiErrorMessage(err, "Couldn't download your quote PDF."),
-        );
+        toast.error(getApiErrorMessage(err, "Couldn't download your quote PDF."));
+    }
+}
+
+async function copyText(value: string, message: string) {
+    try {
+        await navigator.clipboard.writeText(value);
+        toast.success(message);
+    } catch {
+        toast.error("Couldn't copy to clipboard.");
     }
 }
 
 /**
  * The parent app/me/layout.tsx owns the shared Navbar,
  * account navigation, page container and Footer.
- *
  * Customer pages must only render their own content.
  */
 function PageShell({ children }: { children: React.ReactNode }) {
@@ -202,7 +201,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
 }
 
 /* ============================================================
-   STATUS BADGE
+   SMALL PIECES
 ============================================================ */
 
 function StatusBadge({ status }: { status: TourEnquiryStatus }) {
@@ -219,10 +218,6 @@ function StatusBadge({ status }: { status: TourEnquiryStatus }) {
     );
 }
 
-/* ============================================================
-   SECTION LABEL
-============================================================ */
-
 function SectionLabel({
                           children,
                           trailing,
@@ -232,11 +227,187 @@ function SectionLabel({
 }) {
     return (
         <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-bold tracking-tight text-foreground">
+            <h2 className="flex items-center gap-2 text-sm font-bold tracking-tight text-foreground">
+                <span className="h-4 w-1 rounded-full bg-coral" aria-hidden="true" />
                 {children}
             </h2>
             {trailing}
         </div>
+    );
+}
+
+function HeroBackdrop() {
+    return (
+        <>
+            <div
+                className="pointer-events-none absolute inset-0 opacity-[0.12]"
+                style={{
+                    backgroundImage:
+                        "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.6) 1px, transparent 0)",
+                    backgroundSize: "22px 22px",
+                }}
+                aria-hidden="true"
+            />
+            <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full border border-white/10" />
+            <div className="pointer-events-none absolute -right-5 -top-9 h-36 w-36 rounded-full border border-white/10" />
+            <div className="pointer-events-none absolute -bottom-24 left-1/4 h-52 w-52 rounded-full bg-coral/15 blur-3xl" />
+        </>
+    );
+}
+
+/** Visual journey tracker: Received → Conversation → Quote → Booked → Completed */
+function ProgressTracker({ status }: { status: TourEnquiryStatus }) {
+    const closed = status === "LOST" || status === "ARCHIVED";
+    const current = JOURNEY.indexOf(status);
+
+    if (closed) {
+        return (
+            <div className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/[0.08] px-4 py-3 text-xs text-white/75">
+                <XCircle className="h-4 w-4 shrink-0 text-white/60" />
+                {STATUS_COPY[status].description}
+            </div>
+        );
+    }
+
+    return (
+        <ol
+            className="grid grid-cols-5 gap-1"
+            aria-label="Enquiry progress"
+        >
+            {JOURNEY.map((step, index) => {
+                const done = index < current;
+                const active = index === current;
+
+                return (
+                    <li key={step} className="relative flex flex-col items-center gap-2 text-center">
+                        {index > 0 && (
+                            <span
+                                className={`absolute right-1/2 top-[11px] h-0.5 w-full -translate-y-1/2 rounded-full ${
+                                    index <= current ? "bg-coral" : "bg-white/15"
+                                }`}
+                                aria-hidden="true"
+                            />
+                        )}
+
+                        <span
+                            className={`relative z-10 flex h-[22px] w-[22px] items-center justify-center rounded-full border-2 transition-colors ${
+                                done
+                                    ? "border-coral bg-coral text-white"
+                                    : active
+                                        ? "border-coral bg-forest-950 text-coral ring-4 ring-coral/20"
+                                        : "border-white/20 bg-forest-950 text-transparent"
+                            }`}
+                        >
+                            {done ? (
+                                <Check className="h-3 w-3" />
+                            ) : (
+                                <span
+                                    className={`h-1.5 w-1.5 rounded-full ${
+                                        active ? "bg-coral" : "bg-transparent"
+                                    }`}
+                                />
+                            )}
+                        </span>
+
+                        <span
+                            className={`text-[9px] font-semibold leading-tight sm:text-[11px] ${
+                                active
+                                    ? "text-white"
+                                    : done
+                                        ? "text-white/70"
+                                        : "text-white/35"
+                            }`}
+                        >
+                            {STATUS_COPY[step].label}
+                        </span>
+                    </li>
+                );
+            })}
+        </ol>
+    );
+}
+
+function DetailItem({
+                        icon: Icon,
+                        label,
+                        children,
+                    }: {
+    icon: React.ElementType;
+    label: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-border/60 bg-background p-3.5 transition-colors hover:border-coral/25">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-coral/10 text-coral">
+                <Icon className="h-4 w-4" />
+            </span>
+
+            <div className="min-w-0">
+                <p className="text-[11px] font-medium text-muted-foreground">
+                    {label}
+                </p>
+                <div className="mt-1 break-words text-sm font-semibold text-foreground">
+                    {children}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function PriceBreakdown({ quote }: { quote: QuoteResponse }) {
+    return (
+        <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            {formatAmount(quote.pricePerAdult, quote.currency)}
+            {" / adult"}
+            {quote.pricePerChild
+                ? ` · ${formatAmount(quote.pricePerChild, quote.currency)} / child`
+                : ""}
+        </p>
+    );
+}
+
+function SupportCard({ title, text }: { title: string; text: string }) {
+    return (
+        <section className="rounded-2xl border border-border/70 bg-gradient-to-br from-muted/40 to-background p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p className="font-semibold text-foreground">{title}</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                        {text}
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 sm:flex">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-10 rounded-xl bg-background"
+                        asChild
+                    >
+                        <a href="mailto:support@damuchi.com">
+                            <Mail className="h-3.5 w-3.5" />
+                            Email us
+                        </a>
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-10 rounded-xl bg-background"
+                        asChild
+                    >
+                        <a
+                            href="https://wa.me/254700000000"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                            WhatsApp
+                        </a>
+                    </Button>
+                </div>
+            </div>
+        </section>
     );
 }
 
@@ -288,58 +459,45 @@ function AcceptQuoteDialog({
 
     return (
         <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
-            <DialogContent className="w-[calc(100%-2rem)] overflow-hidden rounded-2xl p-0 sm:max-w-md">
-                <div className="bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 px-6 py-6 text-white">
-                    <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10">
-                        <Sparkles className="h-5 w-5 text-coral" />
-                    </div>
+            <DialogContent className="max-h-[92dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-3xl p-0 sm:max-w-md">
+                <div className="relative overflow-hidden bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 px-6 py-7 text-white">
+                    <HeroBackdrop />
 
-                    <DialogHeader className="text-left">
-                        <DialogTitle className="font-display text-2xl font-semibold text-white">
-                            Ready for your adventure?
-                        </DialogTitle>
-                        <DialogDescription className="mt-2 text-sm leading-6 text-white/70">
-                            Review your quote and confirm that you would like
-                            to proceed.
-                        </DialogDescription>
-                    </DialogHeader>
+                    <div className="relative">
+                        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm">
+                            <Sparkles className="h-5 w-5 text-coral" />
+                        </div>
+
+                        <DialogHeader className="text-left">
+                            <DialogTitle className="font-display text-2xl font-semibold text-white">
+                                Ready for your adventure?
+                            </DialogTitle>
+                            <DialogDescription className="mt-2 text-sm leading-6 text-white/70">
+                                Review your quote and confirm that you would
+                                like to proceed.
+                            </DialogDescription>
+                        </DialogHeader>
+                    </div>
                 </div>
 
                 <div className="space-y-5 p-5 sm:p-6">
-                    <div className="rounded-2xl border border-coral/20 bg-coral/[0.06] p-4">
+                    <div className="rounded-2xl border border-coral/20 bg-gradient-to-br from-coral/[0.08] to-transparent p-4">
                         <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-coral">
                             Your quoted total
                         </p>
 
                         <p className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
-                            {formatAmount(
-                                quote.totalPrice,
-                                quote.currency,
-                            )}
+                            {formatAmount(quote.totalPrice, quote.currency)}
                         </p>
 
-                        <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                            {formatAmount(
-                                quote.pricePerAdult,
-                                quote.currency,
-                            )}
-                            {" / adult"}
-                            {quote.pricePerChild
-                                ? ` · ${formatAmount(
-                                    quote.pricePerChild,
-                                    quote.currency,
-                                )} / child`
-                                : ""}
-                        </p>
+                        <PriceBreakdown quote={quote} />
                     </div>
 
-                    <div className="flex gap-3 rounded-xl border border-border/70 bg-muted/30 p-4">
+                    <div className="flex gap-3 rounded-2xl border border-border/70 bg-muted/30 p-4">
                         <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
 
                         <div>
-                            <p className="text-sm font-semibold">
-                                Payment terms
-                            </p>
+                            <p className="text-sm font-semibold">Payment terms</p>
                             <p className="mt-1 text-xs leading-5 text-muted-foreground">
                                 By accepting this quote, you confirm that you
                                 agree to the quoted price and payment terms.
@@ -358,13 +516,13 @@ function AcceptQuoteDialog({
                         </p>
                     )}
 
-                    <DialogFooter className="flex-col gap-2 sm:flex-row">
+                    <DialogFooter className="flex-col-reverse gap-2 sm:flex-row">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={onClose}
                             disabled={isSubmitting}
-                            className="w-full rounded-xl sm:w-auto"
+                            className="h-11 w-full rounded-xl sm:w-auto"
                         >
                             Not now
                         </Button>
@@ -374,7 +532,7 @@ function AcceptQuoteDialog({
                             variant="accent"
                             onClick={handleAccept}
                             disabled={isSubmitting}
-                            className="w-full rounded-xl shadow-sm sm:flex-1"
+                            className="h-11 w-full rounded-xl shadow-sm sm:flex-1"
                         >
                             {isSubmitting ? (
                                 <>
@@ -396,33 +554,6 @@ function AcceptQuoteDialog({
 }
 
 /* ============================================================
-   ENQUIRY DETAIL ITEM
-============================================================ */
-
-function DetailItem({
-                        icon: Icon,
-                        label,
-                        children,
-                    }: {
-    icon: React.ElementType;
-    label: string;
-    children: React.ReactNode;
-}) {
-    return (
-        <div className="min-w-0 rounded-xl border border-border/60 bg-background p-3.5">
-            <div className="flex items-center gap-2 text-muted-foreground">
-                <Icon className="h-3.5 w-3.5 shrink-0 text-coral" />
-                <p className="text-[11px] font-medium">{label}</p>
-            </div>
-
-            <div className="mt-2 break-words text-sm font-semibold text-foreground">
-                {children}
-            </div>
-        </div>
-    );
-}
-
-/* ============================================================
    ENQUIRY DETAIL VIEW
 ============================================================ */
 
@@ -439,35 +570,29 @@ function EnquiryDetailPanel({
         useState<QuoteResponse | null>(null);
 
     const statusInfo = STATUS_COPY[detail.status];
-    const latestSentQuote = detail.quotes.find(
-        (quote) => quote.status === "SENT",
-    );
-
-    const previousQuotes = detail.quotes.filter(
-        (quote) => quote.status !== "SENT",
-    );
+    const latestSentQuote = detail.quotes.find((q) => q.status === "SENT");
+    const previousQuotes = detail.quotes.filter((q) => q.status !== "SENT");
 
     return (
-        <div className="space-y-6">
+        <div className={`space-y-5 sm:space-y-6 ${ENTER}`}>
             <button
                 type="button"
                 onClick={onBack}
-                className="group inline-flex items-center gap-2 rounded-lg py-1 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                className="group inline-flex items-center gap-2 rounded-lg py-1 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
             >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background transition-all group-hover:border-coral/40 group-hover:bg-coral/5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background transition-all group-hover:-translate-x-0.5 group-hover:border-coral/40 group-hover:bg-coral/5">
                     <ArrowLeft className="h-4 w-4" />
                 </span>
                 Back to my enquiries
             </button>
 
-            {/* Detail hero */}
-            <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 p-5 text-white shadow-lg shadow-forest-950/10 sm:p-7">
-                <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full border border-white/10" />
-                <div className="pointer-events-none absolute -right-5 -top-9 h-36 w-36 rounded-full border border-white/10" />
+            {/* Hero */}
+            <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 p-5 text-white shadow-xl shadow-forest-950/10 sm:p-8">
+                <HeroBackdrop />
 
                 <div className="relative">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/80">
+                        <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/80 backdrop-blur-sm">
                             <MapPin className="h-3 w-3 text-coral" />
                             Your safari enquiry
                         </span>
@@ -475,7 +600,7 @@ function EnquiryDetailPanel({
                         <StatusBadge status={detail.status} />
                     </div>
 
-                    <h1 className="mt-5 max-w-xl font-display text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
+                    <h1 className="mt-5 max-w-2xl text-balance font-display text-2xl font-semibold leading-tight tracking-tight sm:text-4xl">
                         {detail.tourName}
                     </h1>
 
@@ -491,18 +616,33 @@ function EnquiryDetailPanel({
                         </span>
 
                         {detail.bookingReference && (
-                            <span className="font-semibold text-white/80">
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    copyText(
+                                        detail.bookingReference!,
+                                        "Booking reference copied.",
+                                    )
+                                }
+                                className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 font-semibold text-white/85 transition-colors hover:bg-white/15"
+                                aria-label="Copy booking reference"
+                            >
                                 Ref: {detail.bookingReference}
-                            </span>
+                                <Copy className="h-3 w-3" />
+                            </button>
                         )}
+                    </div>
+
+                    <div className="mt-7 rounded-2xl border border-white/10 bg-black/10 p-4 backdrop-blur-sm sm:p-5">
+                        <ProgressTracker status={detail.status} />
                     </div>
                 </div>
             </section>
 
             {/* Quote ready */}
             {latestSentQuote && (
-                <section className="relative overflow-hidden rounded-2xl border border-coral/25 bg-gradient-to-br from-coral/[0.09] via-background to-background p-5 shadow-sm sm:p-6">
-                    <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-coral/[0.06] blur-2xl" />
+                <section className="relative overflow-hidden rounded-3xl border border-coral/30 bg-gradient-to-br from-coral/[0.11] via-background to-background p-5 shadow-lg shadow-coral/5 sm:p-7">
+                    <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-coral/[0.1] blur-3xl" />
 
                     <div className="relative">
                         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -512,26 +652,14 @@ function EnquiryDetailPanel({
                                     Your personalised quote is ready
                                 </div>
 
-                                <p className="mt-3 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                                <p className="mt-3 font-display text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
                                     {formatAmount(
                                         latestSentQuote.totalPrice,
                                         latestSentQuote.currency,
                                     )}
                                 </p>
 
-                                <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                                    {formatAmount(
-                                        latestSentQuote.pricePerAdult,
-                                        latestSentQuote.currency,
-                                    )}
-                                    {" / adult"}
-                                    {latestSentQuote.pricePerChild
-                                        ? ` · ${formatAmount(
-                                            latestSentQuote.pricePerChild,
-                                            latestSentQuote.currency,
-                                        )} / child`
-                                        : ""}
-                                </p>
+                                <PriceBreakdown quote={latestSentQuote} />
                             </div>
 
                             <Badge
@@ -543,9 +671,9 @@ function EnquiryDetailPanel({
                         </div>
 
                         {latestSentQuote.inclusionsNote && (
-                            <div className="mt-5 rounded-xl border border-border/60 bg-background/75 p-4">
+                            <div className="mt-5 rounded-2xl border border-border/60 bg-background/80 p-4 backdrop-blur-sm">
                                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                                    Quote notes
+                                    What's included
                                 </p>
                                 <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground/80">
                                     {latestSentQuote.inclusionsNote}
@@ -554,7 +682,8 @@ function EnquiryDetailPanel({
                         )}
 
                         {latestSentQuote.validUntil && (
-                            <p className="mt-4 text-xs text-muted-foreground">
+                            <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <Clock3 className="h-3.5 w-3.5" />
                                 Valid until{" "}
                                 <span className="font-semibold text-foreground">
                                     {formatDate(latestSentQuote.validUntil)}
@@ -562,14 +691,12 @@ function EnquiryDetailPanel({
                             </p>
                         )}
 
-                        <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                             <Button
                                 type="button"
                                 variant="accent"
-                                className="h-11 w-full rounded-xl shadow-sm"
-                                onClick={() =>
-                                    setAcceptingQuote(latestSentQuote)
-                                }
+                                className="h-12 w-full rounded-xl text-sm font-semibold shadow-md transition-transform active:scale-[0.99]"
+                                onClick={() => setAcceptingQuote(latestSentQuote)}
                             >
                                 <CheckCircle2 className="h-4 w-4" />
                                 Accept this quote
@@ -578,7 +705,7 @@ function EnquiryDetailPanel({
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="h-11 w-full rounded-xl bg-background/80"
+                                className="h-12 w-full rounded-xl bg-background/80"
                                 onClick={() =>
                                     handleDownloadQuotePdf(
                                         detail.id,
@@ -594,28 +721,22 @@ function EnquiryDetailPanel({
                 </section>
             )}
 
-            {/* Request details */}
-            <Card className="overflow-hidden rounded-2xl border-border/70 shadow-sm">
-                <CardContent className="p-5 sm:p-6">
+            {/* Trip details */}
+            <Card className="overflow-hidden rounded-3xl border-border/70 shadow-sm">
+                <CardContent className="p-5 sm:p-7">
                     <SectionLabel>Trip details</SectionLabel>
 
-                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <DetailItem
-                            icon={CalendarDays}
-                            label="Preferred travel date"
-                        >
+                    <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <DetailItem icon={CalendarDays} label="Preferred travel date">
                             {formatDate(detail.preferredDate)}
                             {detail.flexibleDates && (
-                                <span className="ml-2 text-xs font-medium text-coral">
+                                <span className="ml-2 rounded-full bg-coral/10 px-2 py-0.5 text-[10px] font-semibold text-coral">
                                     Flexible
                                 </span>
                             )}
                         </DetailItem>
 
-                        <DetailItem
-                            icon={Users}
-                            label="Travellers"
-                        >
+                        <DetailItem icon={Users} label="Travellers">
                             {detail.groupSizeAdults ?? 0} adults
                             {detail.groupSizeChildren
                                 ? `, ${detail.groupSizeChildren} children`
@@ -623,30 +744,20 @@ function EnquiryDetailPanel({
                         </DetailItem>
 
                         {detail.budgetRange && (
-                            <DetailItem
-                                icon={Wallet}
-                                label="Budget range"
-                            >
+                            <DetailItem icon={Wallet} label="Budget range">
                                 {detail.budgetRange}
                             </DetailItem>
                         )}
 
-                        {detail.travelStartDate &&
-                            detail.travelEndDate && (
-                                <DetailItem
-                                    icon={CalendarDays}
-                                    label="Confirmed travel dates"
-                                >
-                                    {formatDate(detail.travelStartDate)} –{" "}
-                                    {formatDate(detail.travelEndDate)}
-                                </DetailItem>
-                            )}
+                        {detail.travelStartDate && detail.travelEndDate && (
+                            <DetailItem icon={CalendarDays} label="Confirmed travel dates">
+                                {formatDate(detail.travelStartDate)} –{" "}
+                                {formatDate(detail.travelEndDate)}
+                            </DetailItem>
+                        )}
 
                         {detail.bookingReference && (
-                            <DetailItem
-                                icon={CheckCircle2}
-                                label="Booking reference"
-                            >
+                            <DetailItem icon={CheckCircle2} label="Booking reference">
                                 {detail.bookingReference}
                             </DetailItem>
                         )}
@@ -654,13 +765,13 @@ function EnquiryDetailPanel({
 
                     {detail.requirements && (
                         <>
-                            <Separator className="my-5" />
+                            <Separator className="my-6" />
 
                             <div>
                                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
                                     Your message
                                 </p>
-                                <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-foreground/80">
+                                <p className="mt-3 whitespace-pre-wrap rounded-2xl bg-muted/30 p-4 text-sm leading-7 text-foreground/80">
                                     {detail.requirements}
                                 </p>
                             </div>
@@ -669,17 +780,17 @@ function EnquiryDetailPanel({
                 </CardContent>
             </Card>
 
-            {/* Previous quotes */}
+            {/* Quote history */}
             {previousQuotes.length > 0 && (
-                <Card className="overflow-hidden rounded-2xl border-border/70 shadow-sm">
-                    <CardContent className="p-5 sm:p-6">
+                <Card className="overflow-hidden rounded-3xl border-border/70 shadow-sm">
+                    <CardContent className="p-5 sm:p-7">
                         <SectionLabel>Quote history</SectionLabel>
 
-                        <div className="mt-4 space-y-3">
+                        <div className="mt-5 space-y-3">
                             {previousQuotes.map((quote) => (
                                 <div
                                     key={quote.id}
-                                    className="flex flex-col gap-3 rounded-xl border border-border/70 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between"
+                                    className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-muted/20 p-4 transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
                                 >
                                     <div className="min-w-0">
                                         <p className="font-display text-lg font-semibold">
@@ -690,8 +801,7 @@ function EnquiryDetailPanel({
                                         </p>
 
                                         <p className="mt-1 text-xs text-muted-foreground">
-                                            Valid until{" "}
-                                            {formatDate(quote.validUntil)}
+                                            Valid until {formatDate(quote.validUntil)}
                                         </p>
                                     </div>
 
@@ -707,7 +817,7 @@ function EnquiryDetailPanel({
                                             type="button"
                                             size="sm"
                                             variant="outline"
-                                            className="rounded-lg"
+                                            className="h-9 rounded-lg"
                                             onClick={() =>
                                                 handleDownloadQuotePdf(
                                                     detail.id,
@@ -726,33 +836,33 @@ function EnquiryDetailPanel({
                 </Card>
             )}
 
-            {/* Activity timeline */}
+            {/* Activity */}
             {detail.activity.length > 0 && (
-                <Card className="overflow-hidden rounded-2xl border-border/70 shadow-sm">
-                    <CardContent className="p-5 sm:p-6">
+                <Card className="overflow-hidden rounded-3xl border-border/70 shadow-sm">
+                    <CardContent className="p-5 sm:p-7">
                         <SectionLabel>Enquiry activity</SectionLabel>
 
-                        <div className="mt-5 space-y-0">
+                        <div className="mt-6">
                             {detail.activity.map((event, index) => (
                                 <div
                                     key={event.id}
-                                    className="relative flex gap-3 pb-5 last:pb-0"
+                                    className="relative flex gap-4 pb-6 last:pb-0"
                                 >
                                     {index !== detail.activity.length - 1 && (
-                                        <div className="absolute bottom-0 left-[7px] top-4 w-px bg-border" />
+                                        <div className="absolute bottom-0 left-[7px] top-5 w-px bg-gradient-to-b from-coral/40 to-border" />
                                     )}
 
                                     <div className="relative z-10 mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-[3px] border-coral/30 bg-coral" />
 
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-medium leading-6">
+                                        <p className="text-sm font-medium leading-6 first-letter:uppercase">
                                             {event.note ||
                                                 event.action
                                                     .replace(/_/g, " ")
                                                     .toLowerCase()}
                                         </p>
 
-                                        <p className="mt-1 text-[11px] text-muted-foreground">
+                                        <p className="mt-0.5 text-[11px] text-muted-foreground">
                                             {formatDate(event.createdDate)}
                                         </p>
                                     </div>
@@ -763,49 +873,10 @@ function EnquiryDetailPanel({
                 </Card>
             )}
 
-            {/* Support */}
-            <section className="rounded-2xl border border-border/70 bg-muted/30 p-5 sm:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <p className="font-semibold text-foreground">
-                            Need a little help?
-                        </p>
-                        <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                            Our safari team is happy to help with your enquiry.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 sm:flex">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="rounded-xl bg-background"
-                            asChild
-                        >
-                            <a href="mailto:support@damuchi.com">
-                                <Mail className="h-3.5 w-3.5" />
-                                Email us
-                            </a>
-                        </Button>
-
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="rounded-xl bg-background"
-                            asChild
-                        >
-                            <a
-                                href="https://wa.me/254700000000"
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                <MessageCircle className="h-3.5 w-3.5" />
-                                WhatsApp
-                            </a>
-                        </Button>
-                    </div>
-                </div>
-            </section>
+            <SupportCard
+                title="Need a little help?"
+                text="Our safari team is happy to help with your enquiry."
+            />
 
             <AcceptQuoteDialog
                 open={!!acceptingQuote}
@@ -821,19 +892,19 @@ function EnquiryDetailPanel({
 }
 
 /* ============================================================
-   LOADING STATE
+   LOADING STATES
 ============================================================ */
 
-function EnquiriesSkeleton() {
+function DetailSkeleton() {
     return (
-        <div className="space-y-4">
-            <Skeleton className="h-36 w-full rounded-3xl" />
+        <div className="space-y-5">
+            <Skeleton className="h-9 w-48 rounded-full" />
+            <Skeleton className="h-64 w-full rounded-3xl" />
+            <Skeleton className="h-48 w-full rounded-3xl" />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Skeleton className="h-24 rounded-2xl" />
-                <Skeleton className="h-24 rounded-2xl" />
+                <Skeleton className="h-20 rounded-2xl" />
+                <Skeleton className="h-20 rounded-2xl" />
             </div>
-            <Skeleton className="h-28 w-full rounded-2xl" />
-            <Skeleton className="h-28 w-full rounded-2xl" />
         </div>
     );
 }
@@ -844,31 +915,41 @@ function EnquiriesSkeleton() {
 
 function EnquiryCard({
                          enquiry,
+                         index,
                          onOpen,
                      }: {
     enquiry: EnquirySummaryResponse;
+    index: number;
     onOpen: (id: string) => void;
 }) {
     const isQuoted = enquiry.status === "QUOTED";
 
     return (
         <Card
-            className={`group overflow-hidden rounded-2xl border shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
+            style={{ animationDelay: `${Math.min(index * 50, 250)}ms` }}
+            className={`group relative overflow-hidden rounded-2xl border shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-foreground/[0.05] ${ENTER} ${
                 isQuoted
-                    ? "border-coral/30 bg-gradient-to-br from-coral/[0.045] to-background"
+                    ? "border-coral/30 bg-gradient-to-br from-coral/[0.06] to-background"
                     : "border-border/70 hover:border-coral/25"
             }`}
         >
+            {isQuoted && (
+                <span
+                    className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-coral to-coral/40"
+                    aria-hidden="true"
+                />
+            )}
+
             <CardContent className="p-0">
                 <button
                     type="button"
                     onClick={() => onOpen(enquiry.id)}
-                    className="w-full p-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-inset sm:p-5"
+                    className="w-full p-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral sm:p-5"
                     aria-label={`View enquiry for ${enquiry.tourName}`}
                 >
                     <div className="flex items-start gap-3 sm:gap-4">
                         <div
-                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-12 sm:w-12 ${
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105 sm:h-12 sm:w-12 ${
                                 isQuoted
                                     ? "bg-coral/10 text-coral"
                                     : "bg-forest-900/[0.07] text-forest-900 dark:bg-emerald-400/10 dark:text-emerald-400"
@@ -882,15 +963,15 @@ function EnquiryCard({
                         </div>
 
                         <div className="min-w-0 flex-1">
-                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
                                 <div className="min-w-0">
                                     <h3 className="line-clamp-2 font-display text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-coral sm:text-lg">
                                         {enquiry.tourName}
                                     </h3>
 
-                                    <p className="mt-1.5 text-xs text-muted-foreground">
-                                        Submitted{" "}
-                                        {formatDate(enquiry.createdDate)}
+                                    <p className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                        <CalendarDays className="h-3 w-3" />
+                                        Submitted {formatDate(enquiry.createdDate)}
                                     </p>
                                 </div>
 
@@ -898,14 +979,14 @@ function EnquiryCard({
                                     <StatusBadge status={enquiry.status} />
 
                                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/70 text-muted-foreground transition-all group-hover:border-coral/30 group-hover:bg-coral/5 group-hover:text-coral">
-                                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                                        <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                                     </span>
                                 </div>
                             </div>
 
                             {isQuoted && (
-                                <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-coral">
-                                    <Sparkles className="h-3.5 w-3.5" />
+                                <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-coral/10 px-2.5 py-1 text-[11px] font-semibold text-coral">
+                                    <Sparkles className="h-3 w-3" />
                                     Your quote is ready to review
                                 </p>
                             )}
@@ -918,13 +999,59 @@ function EnquiryCard({
 }
 
 /* ============================================================
+   FILTER CHIPS
+============================================================ */
+
+function FilterChips({
+                         value,
+                         onChange,
+                     }: {
+    value: TourEnquiryStatus | "ALL";
+    onChange: (value: TourEnquiryStatus | "ALL") => void;
+}) {
+    const options: Array<{ value: TourEnquiryStatus | "ALL"; label: string }> = [
+        { value: "ALL", label: "All" },
+        ...FILTERABLE_STATUSES.map((s) => ({
+            value: s,
+            label: STATUS_COPY[s].label,
+        })),
+    ];
+
+    return (
+        <div
+            role="group"
+            aria-label="Filter enquiries by status"
+            className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden"
+        >
+            {options.map((option) => {
+                const active = option.value === value;
+
+                return (
+                    <button
+                        key={option.value}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => onChange(option.value)}
+                        className={`h-9 shrink-0 rounded-full border px-4 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral ${
+                            active
+                                ? "border-forest-900 bg-forest-900 text-white shadow-sm dark:border-emerald-600 dark:bg-emerald-700"
+                                : "border-border/70 bg-background text-muted-foreground hover:border-coral/40 hover:text-foreground"
+                        }`}
+                    >
+                        {option.label}
+                    </button>
+                );
+            })}
+        </div>
+    );
+}
+
+/* ============================================================
    MAIN PAGE
 ============================================================ */
 
 export default function MyEnquiriesPage() {
-    const [enquiries, setEnquiries] = useState<
-        EnquirySummaryResponse[]
-    >([]);
+    const [enquiries, setEnquiries] = useState<EnquirySummaryResponse[]>([]);
 
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -936,8 +1063,7 @@ export default function MyEnquiriesPage() {
     >("ALL");
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [detail, setDetail] =
-        useState<EnquiryDetailResponse | null>(null);
+    const [detail, setDetail] = useState<EnquiryDetailResponse | null>(null);
     const [detailLoading, setDetailLoading] = useState(false);
 
     const load = useCallback(
@@ -952,18 +1078,13 @@ export default function MyEnquiriesPage() {
                     PAGE_SIZE,
                 );
 
-                setEnquiries(
-                    Array.isArray(data?.content) ? data.content : [],
-                );
+                setEnquiries(Array.isArray(data?.content) ? data.content : []);
                 setTotalPages(data?.totalPages ?? 0);
                 setPage(targetPage);
             } catch (err) {
-                const message = getApiErrorMessage(
-                    err,
-                    "Couldn't load your enquiries.",
+                setLoadError(
+                    getApiErrorMessage(err, "Couldn't load your enquiries."),
                 );
-
-                setLoadError(message);
                 setEnquiries([]);
             } finally {
                 setIsLoading(false);
@@ -980,17 +1101,13 @@ export default function MyEnquiriesPage() {
         setSelectedId(id);
         setDetail(null);
         setDetailLoading(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
 
         try {
             const data = await enquiryApi.myEnquiryDetail(id);
             setDetail(data);
         } catch (err) {
-            toast.error(
-                getApiErrorMessage(
-                    err,
-                    "Couldn't load this enquiry.",
-                ),
-            );
+            toast.error(getApiErrorMessage(err, "Couldn't load this enquiry."));
             setSelectedId(null);
         } finally {
             setDetailLoading(false);
@@ -1005,38 +1122,31 @@ export default function MyEnquiriesPage() {
             setDetail(data);
             await load(page);
         } catch (err) {
-            toast.error(
-                getApiErrorMessage(
-                    err,
-                    "Couldn't refresh this enquiry.",
-                ),
-            );
+            toast.error(getApiErrorMessage(err, "Couldn't refresh this enquiry."));
         }
     }, [selectedId, page, load]);
 
-    const summary = useMemo(() => {
-        return {
+    const summary = useMemo(
+        () => ({
             total: enquiries.length,
-            awaitingResponse: enquiries.filter(
-                (item) => item.status === "QUOTED",
-            ).length,
+            awaitingResponse: enquiries.filter((i) => i.status === "QUOTED")
+                .length,
             inProgress: enquiries.filter(
-                (item) =>
-                    item.status === "NEW" ||
-                    item.status === "CONTACTED",
+                (i) => i.status === "NEW" || i.status === "CONTACTED",
             ).length,
-        };
-    }, [enquiries]);
+        }),
+        [enquiries],
+    );
 
-    const hasNeedsAttention = summary.awaitingResponse > 0;
+    const firstQuoted = enquiries.find((e) => e.status === "QUOTED");
 
     /* Detail view */
     if (selectedId) {
         return (
             <PageShell>
-                <div className="mx-auto w-full max-w-4xl space-y-5">
+                <div className="mx-auto w-full max-w-4xl">
                     {detailLoading || !detail ? (
-                        <EnquiriesSkeleton />
+                        <DetailSkeleton />
                     ) : (
                         <EnquiryDetailPanel
                             detail={detail}
@@ -1052,100 +1162,130 @@ export default function MyEnquiriesPage() {
         );
     }
 
+    const stats = [
+        {
+            label: "On this page",
+            value: summary.total,
+            icon: Inbox,
+        },
+        {
+            label: "In progress",
+            value: summary.inProgress,
+            icon: Clock3,
+        },
+        {
+            label: "Quotes to review",
+            value: summary.awaitingResponse,
+            icon: Sparkles,
+            highlight: true,
+        },
+    ];
+
     /* Enquiry list */
     return (
         <PageShell>
-            <div className="mx-auto w-full max-w-5xl space-y-6 sm:space-y-8">
+            <div className="mx-auto w-full max-w-5xl space-y-6 pb-8 sm:space-y-8">
+                {/* Hero + stats */}
+                <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 p-5 text-white shadow-xl shadow-forest-950/10 sm:p-8">
+                    <HeroBackdrop />
 
-                {/* Attention message */}
-                {!isLoading && hasNeedsAttention && (
-                    <div className="flex items-start gap-3 rounded-2xl border border-coral/25 bg-coral/[0.06] p-4">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-coral/10 text-coral">
-                            <Sparkles className="h-4 w-4" />
+                    <div className="relative flex flex-col gap-6 sm:gap-7">
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0">
+                                <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/80 backdrop-blur-sm">
+                                    <Send className="h-3 w-3 text-coral" />
+                                    Trip enquiries
+                                </span>
+
+                                <h1 className="mt-4 text-balance font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+                                    My safari enquiries
+                                </h1>
+
+                                <p className="mt-2 max-w-md text-sm leading-6 text-white/65">
+                                    Follow every request from first hello to
+                                    confirmed adventure.
+                                </p>
+                            </div>
+
+                            <Button
+                                type="button"
+                                size="icon"
+                                variant="outline"
+                                onClick={() => load(page)}
+                                disabled={isLoading}
+                                aria-label="Refresh enquiries"
+                                title="Refresh enquiries"
+                                className="h-11 w-11 shrink-0 rounded-xl border-white/20 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 hover:text-white"
+                            >
+                                <RefreshCw
+                                    className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+                                />
+                            </Button>
                         </div>
 
-                        <div className="min-w-0">
-                            <p className="text-sm font-semibold text-foreground">
-                                You have a quote waiting for you
-                            </p>
-                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                                Open your quoted enquiry to review the details
-                                and decide whether to proceed.
-                            </p>
+                        <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+                            {stats.map(({ label, value, icon: Icon, highlight }) => (
+                                <div
+                                    key={label}
+                                    className={`rounded-2xl border p-3 backdrop-blur-md sm:p-4 ${
+                                        highlight && value > 0
+                                            ? "border-coral/40 bg-coral/15"
+                                            : "border-white/10 bg-white/[0.07]"
+                                    }`}
+                                >
+                                    <Icon
+                                        className={`h-4 w-4 ${
+                                            highlight ? "text-coral" : "text-white/60"
+                                        }`}
+                                    />
+                                    <p className="mt-2 font-display text-2xl font-semibold tabular-nums sm:text-3xl">
+                                        {isLoading ? "–" : value}
+                                    </p>
+                                    <p className="mt-0.5 text-[10px] leading-tight text-white/60 sm:text-xs">
+                                        {label}
+                                    </p>
+                                </div>
+                            ))}
                         </div>
+                    </div>
+                </section>
+
+                {/* Attention banner */}
+                {!isLoading && firstQuoted && (
+                    <div
+                        className={`flex flex-col gap-3 rounded-2xl border border-coral/25 bg-gradient-to-r from-coral/[0.09] to-transparent p-4 sm:flex-row sm:items-center ${ENTER}`}
+                    >
+                        <div className="flex min-w-0 flex-1 items-start gap-3">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-coral/10 text-coral">
+                                <Sparkles className="h-4 w-4" />
+                            </span>
+
+                            <div className="min-w-0">
+                                <p className="text-sm font-semibold text-foreground">
+                                    You have a quote waiting for you
+                                </p>
+                                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                                    Review the details and decide whether to
+                                    proceed.
+                                </p>
+                            </div>
+                        </div>
+
                         <Button
                             type="button"
-                            variant="outline"
-                            onClick={() => load(page)}
-                            disabled={isLoading}
-                            className="h-10 w-full rounded-xl border-white/20 bg-white/10 text-coral hover:bg-white/15 hover:text-coral sm:w-auto"
+                            variant="accent"
+                            onClick={() => openDetail(firstQuoted.id)}
+                            className="h-10 w-full rounded-xl sm:w-auto"
                         >
-                            <RefreshCw
-                                className={`h-4 w-4 ${
-                                    isLoading ? "animate-spin" : ""
-                                }`}
-                            />
-                            Refresh enquiries
+                            Review quote
+                            <ArrowRight className="h-4 w-4" />
                         </Button>
                     </div>
                 )}
 
-                {/* Overview stats */}
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <Card className="rounded-2xl border-border/70 shadow-sm">
-                        <CardContent className="flex items-center gap-3 p-4 sm:p-5">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-forest-900/[0.07] text-forest-900 dark:bg-emerald-400/10 dark:text-emerald-400">
-                                <Inbox className="h-5 w-5" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-xs text-muted-foreground">
-                                    On this page
-                                </p>
-                                <p className="mt-0.5 text-2xl font-semibold tracking-tight">
-                                    {isLoading ? "—" : summary.total}
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="rounded-2xl border-border/70 shadow-sm">
-                        <CardContent className="flex items-center gap-3 p-4 sm:p-5">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                                <Clock3 className="h-5 w-5" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-xs text-muted-foreground">
-                                    In progress
-                                </p>
-                                <p className="mt-0.5 text-2xl font-semibold tracking-tight">
-                                    {isLoading ? "—" : summary.inProgress}
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="rounded-2xl border-border/70 shadow-sm">
-                        <CardContent className="flex items-center gap-3 p-4 sm:p-5">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-coral/10 text-coral">
-                                <Sparkles className="h-5 w-5" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-xs text-muted-foreground">
-                                    Quotes to review
-                                </p>
-                                <p className="mt-0.5 text-2xl font-semibold tracking-tight">
-                                    {isLoading
-                                        ? "—"
-                                        : summary.awaitingResponse}
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* List heading and filters */}
+                {/* List + filters */}
                 <section className="space-y-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="space-y-3">
                         <div>
                             <h2 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">
                                 Your safari requests
@@ -1156,52 +1296,26 @@ export default function MyEnquiriesPage() {
                             </p>
                         </div>
 
-                        <div className="w-full sm:w-52">
-                            <Select
-                                value={statusFilter}
-                                onValueChange={(value) =>
-                                    setStatusFilter(
-                                        value as TourEnquiryStatus | "ALL",
-                                    )
-                                }
-                            >
-                                <SelectTrigger className="h-10 w-full rounded-xl border-border/70 bg-background">
-                                    <SelectValue placeholder="Filter enquiries" />
-                                </SelectTrigger>
-
-                                <SelectContent>
-                                    <SelectItem value="ALL">
-                                        All enquiries
-                                    </SelectItem>
-
-                                    {FILTERABLE_STATUSES.map((status) => (
-                                        <SelectItem
-                                            key={status}
-                                            value={status}
-                                        >
-                                            {STATUS_COPY[status].label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <FilterChips
+                            value={statusFilter}
+                            onChange={setStatusFilter}
+                        />
                     </div>
 
-                    {/* Loading */}
                     {isLoading ? (
                         <div className="space-y-3">
-                            {Array.from({ length: 4 }).map((_, index) => (
+                            {Array.from({ length: 4 }).map((_, i) => (
                                 <Skeleton
-                                    key={index}
+                                    key={i}
                                     className="h-28 w-full rounded-2xl"
                                 />
                             ))}
                         </div>
                     ) : loadError ? (
-                        <Card className="rounded-2xl border-destructive/20">
-                            <CardContent className="flex flex-col items-center px-5 py-10 text-center">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
-                                    <AlertTriangle className="h-5 w-5" />
+                        <Card className="rounded-3xl border-destructive/20 bg-destructive/[0.02]">
+                            <CardContent className="flex flex-col items-center px-5 py-12 text-center">
+                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+                                    <AlertTriangle className="h-6 w-6" />
                                 </div>
 
                                 <h3 className="mt-4 font-semibold">
@@ -1215,7 +1329,7 @@ export default function MyEnquiriesPage() {
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    className="mt-5 rounded-xl"
+                                    className="mt-5 h-10 rounded-xl"
                                     onClick={() => load(page)}
                                 >
                                     <RefreshCw className="h-4 w-4" />
@@ -1224,8 +1338,8 @@ export default function MyEnquiriesPage() {
                             </CardContent>
                         </Card>
                     ) : enquiries.length === 0 ? (
-                        <Card className="rounded-2xl border-dashed border-border/80 shadow-none">
-                            <CardContent className="px-4 py-8 sm:px-6 sm:py-10">
+                        <Card className="rounded-3xl border-dashed border-border/80 bg-muted/10 shadow-none">
+                            <CardContent className="px-4 py-10 sm:px-6 sm:py-14">
                                 <EmptyState
                                     icon={Inbox}
                                     title={
@@ -1243,10 +1357,11 @@ export default function MyEnquiriesPage() {
                         </Card>
                     ) : (
                         <div className="space-y-3">
-                            {enquiries.map((enquiry) => (
+                            {enquiries.map((enquiry, index) => (
                                 <EnquiryCard
                                     key={enquiry.id}
                                     enquiry={enquiry}
+                                    index={index}
                                     onOpen={openDetail}
                                 />
                             ))}
@@ -1256,7 +1371,10 @@ export default function MyEnquiriesPage() {
 
                 {/* Pagination */}
                 {!isLoading && !loadError && totalPages > 1 && (
-                    <div className="flex flex-col gap-3 border-t border-border/60 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                    <nav
+                        aria-label="Pagination"
+                        className="flex flex-col gap-3 border-t border-border/60 pt-5 sm:flex-row sm:items-center sm:justify-between"
+                    >
                         <p className="text-center text-xs text-muted-foreground sm:text-left">
                             Page{" "}
                             <span className="font-semibold text-foreground">
@@ -1272,8 +1390,7 @@ export default function MyEnquiriesPage() {
                             <Button
                                 type="button"
                                 variant="outline"
-                                size="sm"
-                                className="rounded-xl"
+                                className="h-10 rounded-xl"
                                 onClick={() => load(page - 1)}
                                 disabled={page === 0 || isLoading}
                             >
@@ -1284,63 +1401,21 @@ export default function MyEnquiriesPage() {
                             <Button
                                 type="button"
                                 variant="outline"
-                                size="sm"
-                                className="rounded-xl"
+                                className="h-10 rounded-xl"
                                 onClick={() => load(page + 1)}
-                                disabled={
-                                    page + 1 >= totalPages || isLoading
-                                }
+                                disabled={page + 1 >= totalPages || isLoading}
                             >
                                 Next
                                 <ArrowRight className="h-3.5 w-3.5" />
                             </Button>
                         </div>
-                    </div>
+                    </nav>
                 )}
 
-                {/* Support footer */}
-                <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-muted/25 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-                    <div>
-                        <p className="text-sm font-semibold">
-                            Need help planning your trip?
-                        </p>
-                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                            Talk to our team for assistance with your safari.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 sm:flex">
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="rounded-xl bg-background"
-                            asChild
-                        >
-                            <a href="mailto:support@damuchi.com">
-                                <Mail className="h-3.5 w-3.5" />
-                                Email support
-                            </a>
-                        </Button>
-
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="rounded-xl bg-background"
-                            asChild
-                        >
-                            <a
-                                href="https://wa.me/254700000000"
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                <MessageCircle className="h-3.5 w-3.5" />
-                                WhatsApp
-                            </a>
-                        </Button>
-                    </div>
-                </div>
+                <SupportCard
+                    title="Need help planning your trip?"
+                    text="Talk to our team for assistance with your safari."
+                />
             </div>
         </PageShell>
     );
