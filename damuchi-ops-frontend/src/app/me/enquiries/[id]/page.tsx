@@ -775,7 +775,9 @@ export default function MyEnquiryPage() {
     return (
         <div className={`mx-auto w-full max-w-3xl space-y-6 pb-16 ${ENTER}`}>
             {/* Hero */}
-            <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 p-5 text-white shadow-xl shadow-forest-950/10 sm:p-8">
+            <section
+                className={`relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-[#123D32] via-[#0F3329] to-[#0B2A22] text-white shadow-xl shadow-emerald-950/10 ${ENTER}`}
+            >
                 <HeroBackdrop />
 
                 <div className="relative">

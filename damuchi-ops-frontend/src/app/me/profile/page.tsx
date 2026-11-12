@@ -169,7 +169,7 @@ export default function ProfilePage() {
     const roles = user.roles ?? [];
     const permissions = (user.permissions ?? []).map((p: unknown) => String(p));
 
-    const displayName = user.displayName?.trim() || "Damuchi Member";
+    const displayName = user.displayName?.trim() || "Kivana Trails & Safaris Member";
     const email = user.email?.trim() || "";
     const emailLabel = email || "No email address available";
 
@@ -280,7 +280,7 @@ export default function ProfilePage() {
                         {/* Identity */}
                         <div className="min-w-0">
                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-100/70">
-                                Welcome to Damuchi
+                                Welcome to Kivana Trails & Safaris.
                             </p>
 
                             <h2 className="mt-2 break-words text-balance font-display text-2xl font-semibold tracking-tight sm:text-4xl">

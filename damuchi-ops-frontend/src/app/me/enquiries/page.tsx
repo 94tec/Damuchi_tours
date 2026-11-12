@@ -1186,7 +1186,7 @@ export default function MyEnquiriesPage() {
         <PageShell>
             <div className="mx-auto w-full max-w-5xl space-y-6 pb-8 sm:space-y-8">
                 {/* Hero + stats */}
-                <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 p-5 text-white shadow-xl shadow-forest-950/10 sm:p-8">
+                <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-[#123D32] via-[#0F3329] to-[#0B2A22] p-6 text-white shadow-xl shadow-emerald-950/10 sm:p-8">
                     <HeroBackdrop />
 
                     <div className="relative flex flex-col gap-6 sm:gap-7">
