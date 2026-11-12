@@ -23,7 +23,6 @@ import {
 
 import { toast } from "sonner";
 
-import { Navbar } from "@/components/layout/navbar";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -151,21 +150,16 @@ function generateBookingReference() {
     return `DMC-${stamp}`;
 }
 
-/* ============================================================
-   PAGE SHELL — matches CategoryLandingPage's Navbar/main/Footer frame
-============================================================ */
-
+/**
+ * The parent app/me/layout.tsx owns the shared Navbar,
+ * account navigation, page container and Footer.
+ *
+ * Customer pages must only render their own content.
+ */
 function PageShell({ children }: { children: React.ReactNode }) {
-    return (
-        <div className="flex min-h-screen flex-col bg-background">
-            <Navbar />
-            <main className="flex-1">
-                <div className="container py-10 sm:py-14">{children}</div>
-            </main>
-
-        </div>
-    );
+    return <>{children}</>;
 }
+
 
 /* ============================================================
    STATUS BADGE

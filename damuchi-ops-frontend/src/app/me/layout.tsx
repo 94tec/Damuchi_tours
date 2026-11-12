@@ -12,12 +12,14 @@ import {
     CalendarDays,
     Heart,
     UserRound,
-    ArrowUpRight,
     Compass,
     Sparkles,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+
+import { Navbar } from "@/components/layout/navbar";
+import { Footer } from "@/components/layout/footer";
 
 const NAV = [
     {
@@ -77,88 +79,91 @@ export default function MeLayout({
         pathname.startsWith("/me/profile/");
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="flex min-h-screen flex-col bg-background">
 
-            {/* Dashboard shell */}
-            <div className="mx-auto w-full max-w-7xl px-4 pb-12 pt-6 sm:px-6 sm:pt-10 lg:px-8">
+            {/* Shared public website navigation */}
+            <Navbar />
 
-                {/* Welcome / contextual header */}
-                <motion.section
-                    key={isProfile ? "profile-header" : "dashboard-header"}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35 }}
-                    className={cn(
-                        "relative mb-7 overflow-hidden rounded-[28px] border p-6 sm:p-8",
-                        isProfile
-                            ? "border-emerald-900/20 bg-gradient-to-br from-[#153B35] via-[#19483E] to-[#102F2B] text-white"
-                            : "border-border/60 bg-gradient-to-br from-muted/60 via-background to-background"
-                    )}
-                >
-                    {/* Decorative background */}
-                    <div
+            {/* Customer portal */}
+            <div className="flex-1">
+
+                <div className="mx-auto w-full max-w-7xl px-4 pb-12 pt-7 sm:px-6 sm:pt-10 lg:px-8">
+
+                    {/* Contextual account header */}
+                    <motion.section
+                        key={isProfile ? "profile" : activeRoute.href}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
                         className={cn(
-                            "pointer-events-none absolute -right-12 -top-20 h-64 w-64 rounded-full blur-3xl",
+                            "relative mb-7 overflow-hidden rounded-[28px] border p-6 sm:p-8",
                             isProfile
-                                ? "bg-emerald-400/10"
-                                : "bg-orange-400/10"
+                                ? "border-emerald-900/20 bg-gradient-to-br from-[#153B35] via-[#19483E] to-[#102F2B] text-white"
+                                : "border-border/60 bg-gradient-to-br from-muted/60 via-background to-background"
                         )}
-                    />
+                    >
+                        <div
+                            className={cn(
+                                "pointer-events-none absolute -right-12 -top-20 h-64 w-64 rounded-full blur-3xl",
+                                isProfile
+                                    ? "bg-emerald-400/10"
+                                    : "bg-orange-400/10"
+                            )}
+                        />
 
-                    <div className="relative z-10 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+                        <div className="relative z-10 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
 
-                        <div className="min-w-0">
+                            <div className="min-w-0">
 
-                            <div
-                                className={cn(
-                                    "mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em]",
-                                    isProfile
-                                        ? "text-emerald-200"
-                                        : "text-muted-foreground"
-                                )}
-                            >
-                                {isProfile ? (
-                                    <UserRound className="h-4 w-4" />
-                                ) : (
-                                    <Sparkles className="h-4 w-4 text-orange-500" />
-                                )}
+                                <div
+                                    className={cn(
+                                        "mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em]",
+                                        isProfile
+                                            ? "text-emerald-200"
+                                            : "text-muted-foreground"
+                                    )}
+                                >
+                                    {isProfile ? (
+                                        <UserRound className="h-4 w-4" />
+                                    ) : (
+                                        <Sparkles className="h-4 w-4 text-orange-500" />
+                                    )}
 
-                                {isProfile
-                                    ? "Your personal space"
-                                    : "Kivana Trails &amp; Safaris • My Account"}
+                                    {isProfile
+                                        ? "Your personal space"
+                                        : "Kivana Trails & Safaris · My Account"}
+                                </div>
+
+                                <h1
+                                    className={cn(
+                                        "text-2xl font-bold tracking-tight sm:text-3xl",
+                                        isProfile
+                                            ? "text-white"
+                                            : "text-foreground"
+                                    )}
+                                >
+                                    {isProfile
+                                        ? "Your Profile"
+                                        : `Welcome to ${activeRoute.label}`}
+                                </h1>
+
+                                <p
+                                    className={cn(
+                                        "mt-2 max-w-xl text-sm leading-relaxed sm:text-base",
+                                        isProfile
+                                            ? "text-emerald-100/75"
+                                            : "text-muted-foreground"
+                                    )}
+                                >
+                                    {isProfile
+                                        ? "Manage your personal details, account preferences and security settings."
+                                        : `${activeRoute.description}. Everything you need for your next adventure, in one place.`}
+                                </p>
                             </div>
 
-                            <h1
-                                className={cn(
-                                    "text-2xl font-bold tracking-tight sm:text-3xl",
-                                    isProfile
-                                        ? "text-white"
-                                        : "text-foreground"
-                                )}
-                            >
-                                {isProfile
-                                    ? "Your Profile"
-                                    : `Welcome to ${activeRoute.label}`}
-                            </h1>
-
-                            <p
-                                className={cn(
-                                    "mt-2 max-w-xl text-sm leading-relaxed sm:text-base",
-                                    isProfile
-                                        ? "text-emerald-100/75"
-                                        : "text-muted-foreground"
-                                )}
-                            >
-                                {isProfile
-                                    ? "Manage your personal details, account preferences and security settings."
-                                    : activeRoute.description + ". Everything you need for your next adventure, in one place."}
-                            </p>
-                        </div>
-
-                        <div className="relative flex shrink-0 items-center gap-2">
                             <div
                                 className={cn(
-                                    "flex h-12 w-12 items-center justify-center rounded-2xl",
+                                    "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl",
                                     isProfile
                                         ? "bg-white/10 text-emerald-100"
                                         : "bg-orange-500/10 text-orange-600"
@@ -171,33 +176,26 @@ export default function MeLayout({
                                 )}
                             </div>
                         </div>
-                    </div>
-                </motion.section>
+                    </motion.section>
 
-                {/* Horizontal navigation */}
-                <nav
-                    aria-label="Customer account navigation"
-                    className="mb-8"
-                >
-                    <div className="rounded-2xl border border-border/60 bg-card/80 p-1.5 shadow-sm backdrop-blur-xl">
+                    {/* Horizontal customer navigation */}
+                    <nav
+                        aria-label="Customer account navigation"
+                        className="mb-8"
+                    >
+                        <div className="rounded-2xl border border-border/60 bg-card/90 p-1.5 shadow-sm backdrop-blur-xl">
 
-                        <div className="flex items-center gap-1 overflow-x-auto overscroll-x-contain scrollbar-none">
+                            <div className="flex items-center gap-1 overflow-x-auto overscroll-x-contain scrollbar-none">
 
-                            {NAV.map(
-                                ({ href, label, icon: Icon }) => {
-                                    const active =
-                                        activeRoute.href === href;
-
-                                    const profileTab =
-                                        href === "/me/profile";
+                                {NAV.map(({ href, label, icon: Icon }) => {
+                                    const active = activeRoute.href === href;
+                                    const profileTab = href === "/me/profile";
 
                                     return (
                                         <Link
                                             key={href}
                                             href={href}
-                                            aria-current={
-                                                active ? "page" : undefined
-                                            }
+                                            aria-current={active ? "page" : undefined}
                                             className={cn(
                                                 "relative flex shrink-0 items-center justify-center gap-2 rounded-xl px-3.5 py-3 text-sm font-medium transition-colors duration-200 sm:px-5",
                                                 active
@@ -229,8 +227,7 @@ export default function MeLayout({
                                             <Icon
                                                 className={cn(
                                                     "relative z-10 h-[18px] w-[18px] shrink-0",
-                                                    active &&
-                                                    profileTab &&
+                                                    active && profileTab &&
                                                     "text-emerald-600 dark:text-emerald-300"
                                                 )}
                                             />
@@ -240,46 +237,30 @@ export default function MeLayout({
                                             </span>
                                         </Link>
                                     );
-                                }
-                            )}
-
+                                })}
+                            </div>
                         </div>
-                    </div>
-                </nav>
+                    </nav>
 
-                {/* Page content */}
-                <motion.main
-                    key={pathname}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                        duration: 0.3,
-                        ease: "easeOut",
-                    }}
-                    className="min-w-0"
-                >
-                    {children}
-                </motion.main>
-
-                {/* Subtle footer */}
-                <footer className="mt-12 border-t border-border/50 pt-6">
-                    <div className="flex flex-col items-center justify-between gap-3 text-center text-xs text-muted-foreground sm:flex-row sm:text-left">
-                        <p>
-                            © {new Date().getFullYear()} Kivana Trails &amp; Safaris.
-                            Explore Beyond Borders.
-                        </p>
-
-                        <Link
-                            href="/tours"
-                            className="inline-flex items-center gap-1.5 font-medium transition-colors hover:text-coral"
-                        >
-                            Explore destinations
-                            <ArrowUpRight className="h-3.5 w-3.5" />
-                        </Link>
-                    </div>
-                </footer>
-
+                    {/* Current customer page */}
+                    <motion.div
+                        key={pathname}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                            duration: 0.3,
+                            ease: "easeOut",
+                        }}
+                        className="min-w-0"
+                    >
+                        {children}
+                    </motion.div>
+                </div>
             </div>
+
+            {/* Shared public website footer */}
+            <Footer />
+
         </div>
     );
 }
