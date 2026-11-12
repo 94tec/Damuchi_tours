@@ -1057,7 +1057,7 @@ export default function MyEnquiriesPage() {
         <PageShell>
             <div className="mx-auto w-full max-w-5xl space-y-6 sm:space-y-8">
                 {/* Page hero */}
-                <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 px-5 py-7 text-white shadow-lg shadow-forest-950/10 sm:px-8 sm:py-9">
+                <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 px-5 py-7 text-black shadow-lg shadow-forest-950/10 sm:px-8 sm:py-9">
                     <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full border border-white/[0.08]" />
                     <div className="pointer-events-none absolute -right-8 -top-12 h-40 w-40 rounded-full border border-white/[0.08]" />
                     <div className="pointer-events-none absolute bottom-0 right-1/4 h-28 w-28 rounded-full bg-coral/10 blur-3xl" />
