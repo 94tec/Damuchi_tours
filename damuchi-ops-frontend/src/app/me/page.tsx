@@ -74,16 +74,17 @@ export default function MeOverviewPage() {
                         label: "Your quotation is ready for review",
                     }));
 
-                const balances = bookingData
-                    .filter((b) =>
-                        typeof b.balanceAmount === "number" &&
-                        b.balanceAmount > 0
-                    )
-                    .map((b) => ({
-                        id: b.id,
-                        tourName: b.tourName,
-                        amount: b.balanceAmount,
-                        currency: b.currency,
+                const balances: BalanceItem[] = bookingData
+                    .filter((booking) => {
+                        const amount = booking.balanceAmount ?? 0;
+
+                        return Number.isFinite(amount) && amount > 0;
+                    })
+                    .map((booking) => ({
+                        id: booking.id,
+                        tourName: booking.tourName,
+                        amount: booking.balanceAmount ?? 0,
+                        currency: booking.currency ?? "USD",
                     }));
 
                 setNeedsAction(quoted);
