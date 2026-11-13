@@ -119,24 +119,47 @@ export default function WishlistPage() {
     return (
         <div className="mx-auto w-full max-w-7xl space-y-7 pb-10 sm:space-y-9">
             {/* HERO */}
-            <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 px-5 py-8 text-white shadow-xl shadow-forest-950/10 sm:px-8 sm:py-11 lg:px-12">
+
+            {/* HERO */}
+            <section
+                className="relative isolate w-full overflow-hidden rounded-3xl px-5 py-8 text-white shadow-xl shadow-emerald-950/15 sm:px-8 sm:py-11 lg:px-12"
+                style={{
+                    backgroundColor: "#123D32",
+                    backgroundImage:
+                        "linear-gradient(125deg, #123D32 0%, #0F3329 48%, #0B2A22 100%)",
+                }}
+            >
+                {/* Decorative background */}
                 <div
+                    aria-hidden="true"
                     className="pointer-events-none absolute inset-0 opacity-[0.12]"
                     style={{
                         backgroundImage:
                             "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.6) 1px, transparent 0)",
                         backgroundSize: "24px 24px",
                     }}
-                    aria-hidden="true"
                 />
-                <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full border border-white/[0.08]" />
-                <div className="pointer-events-none absolute -right-8 -top-12 h-48 w-48 rounded-full border border-white/[0.08]" />
-                <div className="pointer-events-none absolute -bottom-24 right-1/3 h-56 w-56 rounded-full bg-coral/15 blur-3xl" />
 
-                <div className="relative flex flex-col gap-7 md:flex-row md:items-end md:justify-between">
-                    <div className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 p-5 text-white shadow-xl shadow-forest-950/10 sm:p-8">
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full border border-white/[0.08]"
+                />
+
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -right-8 -top-12 h-48 w-48 rounded-full border border-white/[0.08]"
+                />
+
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -bottom-24 right-1/3 h-56 w-56 rounded-full bg-[#FF6B35]/20 blur-3xl"
+                />
+
+                {/* Hero content */}
+                <div className="relative z-10 flex flex-col gap-7 md:flex-row md:items-end md:justify-between">
+                    <div className="max-w-2xl">
                         <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/80 backdrop-blur-sm">
-                            <Heart className="h-3.5 w-3.5 fill-coral text-coral" />
+                            <Heart className="h-3.5 w-3.5 fill-[#FF6B35] text-[#FF6B35]" />
                             Your personal collection
                         </div>
 
@@ -144,44 +167,50 @@ export default function WishlistPage() {
                             Saved adventures
                         </h1>
 
-                        <p className="mt-3 max-w-xl text-sm leading-7 text-white/65 sm:text-base">
+                        <p className="mt-3 max-w-xl text-sm leading-7 text-white/75 sm:text-base">
                             The journeys that caught your eye, all in one
                             place. Keep your favourite experiences close while
                             you plan your next escape.
                         </p>
 
-                        <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-white/65">
-                            <span className="inline-flex items-center gap-2">
-                                <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                                Private to your account
-                            </span>
+                        <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-white/75">
+                <span className="inline-flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-emerald-300" />
+                    Private to your account
+                </span>
 
                             <span className="inline-flex items-center gap-2">
-                                <Compass className="h-4 w-4 text-coral" />
-                                Plan at your own pace
-                            </span>
+                    <Compass className="h-4 w-4 text-[#FF6B35]" />
+                    Plan at your own pace
+                </span>
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/15 bg-white/[0.08] p-4 backdrop-blur-md md:min-w-[200px] md:flex-col md:items-start md:gap-1 md:p-5">
+                    {/* Collection counter */}
+                    <div className="relative flex items-center justify-between gap-4 rounded-2xl border border-white/15 bg-white/[0.10] p-4 backdrop-blur-md md:min-w-[200px] md:flex-col md:items-start md:gap-1 md:p-5">
                         <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/55">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/65">
                                 Your collection
                             </p>
+
                             <p className="mt-1 font-display text-4xl font-semibold tabular-nums text-white">
                                 {count.toString().padStart(2, "0")}
                             </p>
-                            <p className="text-xs text-white/55">
-                                {count === 1 ? "Saved adventure" : "Saved adventures"}
+
+                            <p className="text-xs text-white/65">
+                                {count === 1
+                                    ? "Saved adventure"
+                                    : "Saved adventures"}
                             </p>
                         </div>
 
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-coral/15 text-coral md:mt-3">
-                            <Heart className="h-5 w-5 fill-coral/40" />
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FF6B35]/20 text-[#FF6B35] md:mt-3">
+                            <Heart className="h-5 w-5 fill-[#FF6B35]/40" />
                         </div>
                     </div>
                 </div>
             </section>
+
 
             {/* COLLECTION */}
             <section className="space-y-5">

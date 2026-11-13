@@ -590,7 +590,7 @@ function EnquiryDetailPanel({
             <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 p-5 text-white shadow-xl shadow-forest-950/10 sm:p-8">
                 <HeroBackdrop />
 
-                <div className="relative">
+                <div className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 p-5 text-white shadow-xl shadow-forest-950/10 sm:p-8">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/80 backdrop-blur-sm">
                             <MapPin className="h-3 w-3 text-coral" />
