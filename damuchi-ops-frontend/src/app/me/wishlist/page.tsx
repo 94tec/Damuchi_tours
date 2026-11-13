@@ -45,6 +45,10 @@ function getReference(id: string) {
     return id.length > 18 ? `${id.slice(0, 8)}…${id.slice(-5)}` : id;
 }
 
+function PageShell({ children }: { children: React.ReactNode }) {
+    return <>{children}</>;
+}
+
 const ENTER =
     "animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both motion-reduce:animate-none";
 
@@ -386,40 +390,42 @@ function WishlistCard({
 
 function EmptyWishlist() {
     return (
-        <div className="relative overflow-hidden rounded-3xl border border-dashed border-border bg-gradient-to-b from-muted/30 to-background px-5 py-14 text-center sm:px-8 sm:py-20">
-            <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-coral/[0.08] blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-emerald-900/[0.08] blur-3xl" />
+        <PageShell>
+            <div className="relative overflow-hidden rounded-3xl border border-dashed border-border bg-gradient-to-b from-muted/30 to-background px-5 py-14 text-center sm:px-8 sm:py-20">
+                <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-coral/[0.08] blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-emerald-900/[0.08] blur-3xl" />
 
-            <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-coral/20 bg-coral/[0.08] text-coral shadow-sm">
-                <Heart className="h-7 w-7" />
+                <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-coral/20 bg-coral/[0.08] text-coral shadow-sm">
+                    <Heart className="h-7 w-7" />
+                </div>
+
+                <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-[#123D32] via-[#0F3329] to-[#0B2A22] p-6 text-white shadow-xl shadow-emerald-950/10 sm:p-8">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-coral">
+                        Your collection awaits
+                    </p>
+
+                    <h3 className="mt-2 text-balance font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+                        Your wishlist is waiting for its first adventure
+                    </h3>
+
+                    <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                        Discover extraordinary safari experiences, find the
+                        journeys you love, and save them here for when you're ready
+                        to plan.
+                    </p>
+
+                    <Button
+                        asChild
+                        className="mt-7 h-11 w-full rounded-xl bg-forest-900 px-6 text-white shadow-sm hover:bg-forest-800 sm:w-auto dark:bg-emerald-700 dark:hover:bg-emerald-600"
+                    >
+                        <Link href="/tours">
+                            Explore safari experiences
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                    </Button>
+                </section>
             </div>
-
-            <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-[#123D32] via-[#0F3329] to-[#0B2A22] p-6 text-white shadow-xl shadow-emerald-950/10 sm:p-8">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-coral">
-                    Your collection awaits
-                </p>
-
-                <h3 className="mt-2 text-balance font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-                    Your wishlist is waiting for its first adventure
-                </h3>
-
-                <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                    Discover extraordinary safari experiences, find the
-                    journeys you love, and save them here for when you're ready
-                    to plan.
-                </p>
-
-                <Button
-                    asChild
-                    className="mt-7 h-11 w-full rounded-xl bg-forest-900 px-6 text-white shadow-sm hover:bg-forest-800 sm:w-auto dark:bg-emerald-700 dark:hover:bg-emerald-600"
-                >
-                    <Link href="/tours">
-                        Explore safari experiences
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                </Button>
-            </section>
-        </div>
+        </PageShell>
     );
 }
 

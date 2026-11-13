@@ -134,6 +134,9 @@ function CopyRow({ label, value }: { label: string; value: string }) {
         </button>
     );
 }
+function PageShell({ children }: { children: React.ReactNode }) {
+    return <>{children}</>;
+}
 
 /* ============================================================
    STATUS BADGES
@@ -773,157 +776,159 @@ export default function MyEnquiryPage() {
     ];
 
     return (
-        <div className={`mx-auto w-full max-w-3xl space-y-6 pb-16 ${ENTER}`}>
-            {/* Hero */}
-            <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-[#123D32] via-[#0F3329] to-[#0B2A22] p-6 text-white shadow-xl shadow-emerald-950/10 sm:p-8">
-                <HeroBackdrop />
+        <PageShell>
+            <div className={`mx-auto w-full max-w-3xl space-y-6 pb-16 ${ENTER}`}>
+                {/* Hero */}
+                <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-[#123D32] via-[#0F3329] to-[#0B2A22] p-6 text-white shadow-xl shadow-emerald-950/10 sm:p-8">
+                    <HeroBackdrop />
 
-                <div className="relative">
-                    <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/80 backdrop-blur-sm">
-                        <Sparkles className="h-3 w-3 text-coral" />
-                        Your enquiry
-                    </span>
-
-                    <h1 className="mt-4 max-w-xl text-balance font-display text-2xl font-semibold leading-tight tracking-tight sm:text-4xl">
-                        {detail.tourName}
-                    </h1>
-
-                    <div className="mt-7 rounded-2xl border border-white/10 bg-black/10 p-4 backdrop-blur-sm sm:p-5">
-                        <JourneyStepper done={journeyDone} />
-                    </div>
-                </div>
-            </section>
-
-            {/* Booking confirmed */}
-            {detail.bookingReference && (
-                <div className="relative overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-background p-5 sm:p-6 dark:border-emerald-900/60 dark:from-emerald-950/30">
-                    <div className="flex items-start gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600/10 text-emerald-700 dark:text-emerald-400">
-                            <CheckCircle2 className="h-5 w-5" />
+                    <div className="relative">
+                        <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/80 backdrop-blur-sm">
+                            <Sparkles className="h-3 w-3 text-coral" />
+                            Your enquiry
                         </span>
 
-                        <div className="min-w-0 space-y-1.5">
-                            <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
-                                Booking confirmed
-                            </p>
+                        <h1 className="mt-4 max-w-xl text-balance font-display text-2xl font-semibold leading-tight tracking-tight sm:text-4xl">
+                            {detail.tourName}
+                        </h1>
 
-                            <button
-                                type="button"
-                                onClick={() => copy(detail.bookingReference!)}
-                                className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/70 px-3 py-1 font-mono text-sm font-semibold text-emerald-900 transition-colors hover:bg-white dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"
-                                aria-label="Copy booking reference"
-                            >
-                                {detail.bookingReference}
-                                <Copy className="h-3 w-3" />
-                            </button>
-
-                            {detail.travelStartDate && (
-                                <p className="inline-flex items-center gap-1.5 text-sm text-emerald-900 dark:text-emerald-200">
-                                    <CalendarDays className="h-3.5 w-3.5" />
-                                    {shortDate(detail.travelStartDate)} →{" "}
-                                    {shortDate(detail.travelEndDate)}
-                                </p>
-                            )}
-
-                            <p className="text-xs leading-5 text-emerald-800/90 dark:text-emerald-300/80">
-                                We've emailed your itinerary and pickup details.
-                                Any remaining balance is due 14 days before
-                                travel.
-                            </p>
+                        <div className="mt-7 rounded-2xl border border-white/10 bg-black/10 p-4 backdrop-blur-sm sm:p-5">
+                            <JourneyStepper done={journeyDone} />
                         </div>
                     </div>
-                </div>
-            )}
+                </section>
 
-            {/* Quotes */}
-            <section className="space-y-3">
-                <SectionHeading title="Quotes" />
+                {/* Booking confirmed */}
+                {detail.bookingReference && (
+                    <div className="relative overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-background p-5 sm:p-6 dark:border-emerald-900/60 dark:from-emerald-950/30">
+                        <div className="flex items-start gap-3">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600/10 text-emerald-700 dark:text-emerald-400">
+                                <CheckCircle2 className="h-5 w-5" />
+                            </span>
 
-                {quotes.length === 0 ? (
-                    <EmptyState
-                        icon={Clock}
-                        title="No quote yet"
-                        description="We'll email you as soon as your quote is ready."
-                    />
-                ) : (
-                    quotes.map((q) => (
-                        <QuoteCard
-                            key={q.id}
-                            quote={q}
-                            onDownload={() => handleDownload(q.id)}
-                            onAccept={() => handleAccept(q.id)}
-                            isAccepting={acceptingId === q.id}
-                        />
-                    ))
+                            <div className="min-w-0 space-y-1.5">
+                                <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
+                                    Booking confirmed
+                                </p>
+
+                                <button
+                                    type="button"
+                                    onClick={() => copy(detail.bookingReference!)}
+                                    className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/70 px-3 py-1 font-mono text-sm font-semibold text-emerald-900 transition-colors hover:bg-white dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"
+                                    aria-label="Copy booking reference"
+                                >
+                                    {detail.bookingReference}
+                                    <Copy className="h-3 w-3" />
+                                </button>
+
+                                {detail.travelStartDate && (
+                                    <p className="inline-flex items-center gap-1.5 text-sm text-emerald-900 dark:text-emerald-200">
+                                        <CalendarDays className="h-3.5 w-3.5" />
+                                        {shortDate(detail.travelStartDate)} →{" "}
+                                        {shortDate(detail.travelEndDate)}
+                                    </p>
+                                )}
+
+                                <p className="text-xs leading-5 text-emerald-800/90 dark:text-emerald-300/80">
+                                    We've emailed your itinerary and pickup details.
+                                    Any remaining balance is due 14 days before
+                                    travel.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 )}
-            </section>
 
-            {/* Payment */}
-            {acceptedQuote && !detail.bookingReference && (
-                <section className="space-y-4">
-                    <SectionHeading
-                        title="Payment"
-                        hint="Secure your trip with a deposit or the full amount."
-                    />
+                {/* Quotes */}
+                <section className="space-y-3">
+                    <SectionHeading title="Quotes" />
 
-                    {hasVerified ? (
-                        <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300">
-                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-                            Your payment is verified. We're preparing your
-                            booking and will email you the details.
-                        </div>
-                    ) : hasPending ? (
-                        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
-                            <Clock className="mt-0.5 h-4 w-4 shrink-0" />
-                            We've received your payment reference and are
-                            checking it against our records. We'll email you
-                            once it's confirmed.
-                        </div>
+                    {quotes.length === 0 ? (
+                        <EmptyState
+                            icon={Clock}
+                            title="No quote yet"
+                            description="We'll email you as soon as your quote is ready."
+                        />
                     ) : (
-                        <>
-                            <PaymentInstructions quote={acceptedQuote} />
-                            <PaymentSubmissionForm
-                                enquiryId={id}
-                                quote={acceptedQuote}
-                                onSubmitted={load}
+                        quotes.map((q) => (
+                            <QuoteCard
+                                key={q.id}
+                                quote={q}
+                                onDownload={() => handleDownload(q.id)}
+                                onAccept={() => handleAccept(q.id)}
+                                isAccepting={acceptingId === q.id}
                             />
-                        </>
-                    )}
-
-                    {quoteSubmissions.length > 0 && (
-                        <div className="space-y-2.5">
-                            <p className="text-xs font-semibold text-muted-foreground">
-                                Your payment submissions
-                            </p>
-
-                            {quoteSubmissions.map((s) => (
-                                <Card key={s.id} className="rounded-2xl border-border/70">
-                                    <CardContent className="space-y-1.5 p-4">
-                                        <div className="flex items-center justify-between gap-3">
-                                            <p className="min-w-0 truncate font-mono text-sm font-semibold">
-                                                {s.referenceCode}
-                                            </p>
-                                            <SubmissionBadge status={s.status} />
-                                        </div>
-
-                                        <p className="text-xs text-muted-foreground">
-                                            {formatCurrency(s.amountPaid, s.currency)} ·{" "}
-                                            {s.channel === "MPESA" ? "M-Pesa" : "Bank transfer"} ·{" "}
-                                            {shortDate(s.createdDate)}
-                                        </p>
-
-                                        {s.status === "REJECTED" && s.rejectionReason && (
-                                            <p className="rounded-xl bg-red-50 p-3 text-xs leading-5 text-red-700 dark:bg-red-950/30 dark:text-red-300">
-                                                {s.rejectionReason}
-                                            </p>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
+                        ))
                     )}
                 </section>
-            )}
-        </div>
+
+                {/* Payment */}
+                {acceptedQuote && !detail.bookingReference && (
+                    <section className="space-y-4">
+                        <SectionHeading
+                            title="Payment"
+                            hint="Secure your trip with a deposit or the full amount."
+                        />
+
+                        {hasVerified ? (
+                            <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300">
+                                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                                Your payment is verified. We're preparing your
+                                booking and will email you the details.
+                            </div>
+                        ) : hasPending ? (
+                            <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+                                <Clock className="mt-0.5 h-4 w-4 shrink-0" />
+                                We've received your payment reference and are
+                                checking it against our records. We'll email you
+                                once it's confirmed.
+                            </div>
+                        ) : (
+                            <>
+                                <PaymentInstructions quote={acceptedQuote} />
+                                <PaymentSubmissionForm
+                                    enquiryId={id}
+                                    quote={acceptedQuote}
+                                    onSubmitted={load}
+                                />
+                            </>
+                        )}
+
+                        {quoteSubmissions.length > 0 && (
+                            <div className="space-y-2.5">
+                                <p className="text-xs font-semibold text-muted-foreground">
+                                    Your payment submissions
+                                </p>
+
+                                {quoteSubmissions.map((s) => (
+                                    <Card key={s.id} className="rounded-2xl border-border/70">
+                                        <CardContent className="space-y-1.5 p-4">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <p className="min-w-0 truncate font-mono text-sm font-semibold">
+                                                    {s.referenceCode}
+                                                </p>
+                                                <SubmissionBadge status={s.status} />
+                                            </div>
+
+                                            <p className="text-xs text-muted-foreground">
+                                                {formatCurrency(s.amountPaid, s.currency)} ·{" "}
+                                                {s.channel === "MPESA" ? "M-Pesa" : "Bank transfer"} ·{" "}
+                                                {shortDate(s.createdDate)}
+                                            </p>
+
+                                            {s.status === "REJECTED" && s.rejectionReason && (
+                                                <p className="rounded-xl bg-red-50 p-3 text-xs leading-5 text-red-700 dark:bg-red-950/30 dark:text-red-300">
+                                                    {s.rejectionReason}
+                                                </p>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                )}
+            </div>
+        </PageShell>
     );
 }
