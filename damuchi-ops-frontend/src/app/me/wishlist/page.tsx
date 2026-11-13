@@ -394,7 +394,7 @@ function EmptyWishlist() {
                 <Heart className="h-7 w-7" />
             </div>
 
-            <div className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-[#123D32] via-[#0F3329] to-[#0B2A22] p-6 text-white shadow-xl shadow-emerald-950/10 sm:p-8">
+            <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-[#123D32] via-[#0F3329] to-[#0B2A22] p-6 text-white shadow-xl shadow-emerald-950/10 sm:p-8">
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-coral">
                     Your collection awaits
                 </p>
@@ -418,7 +418,7 @@ function EmptyWishlist() {
                         <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                 </Button>
-            </div>
+            </section>
         </div>
     );
 }
