@@ -59,7 +59,7 @@ export function AuthLayout({
           <div className="mb-8 flex items-center gap-2.5 lg:hidden">
             <Compass className="h-5 w-5 text-accent" strokeWidth={1.75} />
             <span className="font-display text-base font-medium tracking-tight">
-              Damuchi Safaris Access
+              Kivana Trails & Safaris Access
             </span>
           </div>
           {children}

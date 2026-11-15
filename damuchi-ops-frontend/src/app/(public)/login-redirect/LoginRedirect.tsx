@@ -53,7 +53,7 @@ export default function LoginRedirect() {
           <span className="text-sm font-medium text-earth">Redirecting to sign in…</span>
         </div>
         <p className="text-xs text-stone">
-          You'll be taken to the Damuchi sign-in page.
+          You'll be taken to the Kivana Trails & Safaris sign-in page.
         </p>
       </div>
     </div>

@@ -119,8 +119,6 @@ export default function WishlistPage() {
     return (
         <div className="mx-auto w-full max-w-7xl space-y-7 pb-10 sm:space-y-9">
             {/* HERO */}
-
-            {/* HERO */}
             <section
                 className="relative isolate w-full overflow-hidden rounded-3xl px-5 py-8 text-white shadow-xl shadow-emerald-950/15 sm:px-8 sm:py-11 lg:px-12"
                 style={{

@@ -91,7 +91,7 @@ export default function DashboardPage() {
               month: "long",
             })}
             title={`${greeting}${user?.firstName ? `, ${user.firstName}` : ""}.`}
-            subtitle="Here's what's happening across your Damuchi Safaris today."
+            subtitle="Here's what's happening across your Kivana Trails & Safaris today."
         />
 
         {/* Stats */}
