@@ -191,10 +191,10 @@ export function MobileNav({
 
                 <div className="mt-auto space-y-3 border-t border-gray-100 pt-4">
 
-                    <a href="tel:+254700000000"
+                    <a href="tel:+254185528874"
                         className="flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
                     >
-                        <PhoneCall className="h-4 w-4" /> +254 700 000 000
+                        <PhoneCall className="h-4 w-4" /> +254185528874
                     </a>
                 </div>
 

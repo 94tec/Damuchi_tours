@@ -344,7 +344,7 @@ export function Footer() {
 
             {/* Phone */}
             <a
-              href="tel:+254700000000"
+              href="tel:+254185528874"
               className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.025] p-3.5 transition-all duration-300 hover:border-coral/20 hover:bg-white/[0.05]"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-coral/10 text-coral">
@@ -360,7 +360,7 @@ export function Footer() {
                 </p>
 
                 <p className="mt-0.5 text-sm text-white/60 transition-colors group-hover:text-white">
-                  +254 700 000 000
+                  +254185528874
                 </p>
               </div>
             </a>

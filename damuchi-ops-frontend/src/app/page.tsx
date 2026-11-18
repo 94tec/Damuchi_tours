@@ -8,11 +8,9 @@ import { TourGrid }            from "@/components/tours/tour-grid";
 import { DestinationsStrip }   from "@/components/landing/destinations-strip";
 import { HowItWorks }          from "@/components/landing/how-it-works";
 import { Testimonials }        from "@/components/landing/testimonials";
-import { EnquiryBand }         from "@/components/landing/enquiry/enquiry-band";
 import { CtaBandGate }         from "@/components/landing/cta-band-gate";
 import { FloatingEnquiryCta }  from "@/components/landing/floating-enquiry-cta";
 import type { Metadata }       from "next";
-import {TourShowcaseSection} from "@/components/tours/tour-showcase-section";
 
 export const metadata: Metadata = {
     title:       "Kivana Trails & Safaris | East Africa's tours, real local guides",

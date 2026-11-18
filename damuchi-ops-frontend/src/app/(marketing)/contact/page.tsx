@@ -64,7 +64,7 @@ export default function ContactPage() {
                                                 Phone
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                +254 700 000 000
+                                                +254185528874
                                             </p>
                                         </div>
                                     </div>
@@ -76,7 +76,7 @@ export default function ContactPage() {
                                                 Email
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                hello@damuchi.com
+                                                info@kivanasafaris.com
                                             </p>
                                         </div>
                                     </div>
