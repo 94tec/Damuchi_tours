@@ -94,7 +94,7 @@ export function PremiumTourCarousel({
             onBlurCapture={() => (pausedRef.current = false)}
             className="
                 relative overflow-hidden rounded-3xl border border-white/10
-                bg-white/[0.04] p-4 backdrop-blur-2xl
+                bg-white/[0.04] p-3 backdrop-blur-2xl
                 shadow-[0_20px_80px_rgba(0,0,0,0.35)]
                 sm:rounded-[32px] sm:p-6 lg:rounded-[36px] lg:p-8
             "
@@ -136,11 +136,11 @@ export function PremiumTourCarousel({
             <div className="relative z-10">
                 <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-y-0 left-0 z-10 w-4 bg-gradient-to-r from-background/70 to-transparent sm:w-12 lg:w-24"
+                    className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-12 bg-gradient-to-r from-background/70 to-transparent sm:block lg:w-24"
                 />
                 <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-y-0 right-0 z-10 w-4 bg-gradient-to-l from-background/70 to-transparent sm:w-12 lg:w-24"
+                    className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-12 bg-gradient-to-l from-background/70 to-transparent sm:block lg:w-24"
                 />
 
                 {/* py/-my gives hover-lift and shadows room before overflow clips */}
@@ -151,7 +151,7 @@ export function PremiumTourCarousel({
                             <div
                                 key={tour.id}
                                 className="
-                                    min-w-0 flex-[0_0_88%] pl-4
+                                    min-w-0 flex-[0_0_100%] pl-4
                                     sm:flex-[0_0_62%] sm:pl-6
                                     lg:flex-[0_0_40%]
                                     xl:flex-[0_0_32%]
