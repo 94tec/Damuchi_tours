@@ -4,6 +4,7 @@ import * as React from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { TourCard } from "./tour-card";
@@ -123,13 +124,14 @@ export function PremiumTourCarousel({
                     </p>
                 </div>
 
-                <Button
-                    variant="outline"
-                    className="hidden shrink-0 gap-2 rounded-full md:flex"
+                // landing page, under the featured tours
+                <Link
+                    href="/tours"
+                    className="inline-flex h-12 items-center gap-2 rounded-full bg-coral px-7 text-sm font-semibold text-white"
                 >
-                    View All
+                    View all tours
                     <ArrowRight className="h-4 w-4" />
-                </Button>
+                </Link>
             </div>
 
             {/* Viewport + edge fades (fades live here so they never cover the header) */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowUpRight, Clock3, MapPin, Star } from "lucide-react";
 
@@ -26,7 +26,6 @@ interface TourCardProps {
 
 export function TourCard({ tour }: TourCardProps) {
     const shouldReduceMotion = useReducedMotion();
-    const router = useRouter();
 
     const emoji = CATEGORY_EMOJI[tour.category];
     const categoryLabel = CATEGORY_LABELS[tour.category];
@@ -38,9 +37,6 @@ export function TourCard({ tour }: TourCardProps) {
 
     const formattedPrice = (tour.price ?? 0).toLocaleString("en-KE");
 
-    function goToTour() {
-        router.push(`/tours/${tour.slug}`);
-    }
 
     return (
         <motion.article
@@ -51,28 +47,24 @@ export function TourCard({ tour }: TourCardProps) {
             className="h-full min-w-0"
         >
             <div
-                role="link"
-                tabIndex={0}
-                onClick={goToTour}
-                onKeyDown={(e) => {
-                    // Ignore keys that bubble up from the nested enquiry button
-                    if (e.target !== e.currentTarget) return;
-                    if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        goToTour();
-                    }
-                }}
-                aria-label={`View ${tour.name}`}
                 className="
-                    group relative flex h-full min-w-0 cursor-pointer flex-col
+                    group relative flex h-full min-w-0 flex-col
                     overflow-hidden rounded-2xl border border-border/70 bg-card
                     shadow-sm transition-all duration-500
                     hover:border-accent/30 hover:shadow-2xl hover:shadow-black/[0.08]
-                    focus-visible:outline-none focus-visible:ring-2
-                    focus-visible:ring-ring focus-visible:ring-offset-2
                     dark:hover:shadow-black/20 sm:rounded-3xl
                 "
-            >
+                        >
+                            {/* Stretched link: covers the whole card */}
+                            <Link
+                                href={`/tours/${tour.slug}`}
+                                aria-label={`View ${tour.name}`}
+                                className="
+                        absolute inset-0 z-10 rounded-2xl sm:rounded-3xl
+                        focus-visible:outline-none focus-visible:ring-2
+                        focus-visible:ring-ring focus-visible:ring-offset-2
+                    "
+                />
                 {/* ========================================
                     IMAGE
                 ======================================== */}
@@ -289,18 +281,13 @@ export function TourCard({ tour }: TourCardProps) {
 
                         <div className="flex grow basis-36 items-center justify-end gap-2">
                             {tour.active && (
-                                <div
-                                    onClick={(e) => e.stopPropagation()}
-                                    onKeyDown={(e) => e.stopPropagation()}
-                                >
-                                    <EnquiryModal
-                                        tourSummary={tour}
-                                        source="tour-card-enquire"
-                                    />
+                                // Above the link layer so the button stays clickable
+                                <div className="relative z-20">
+                                    <EnquiryModal tourSummary={tour} source="tour-card-enquire" />
                                 </div>
                             )}
 
-                            {/* Explore — decorative; the whole card is the link */}
+                            {/* Explore: decorative. No z-index, so clicks fall through to the link */}
                             <span
                                 aria-hidden="true"
                                 className="
@@ -312,7 +299,7 @@ export function TourCard({ tour }: TourCardProps) {
                                     group-hover:text-accent-foreground group-hover:shadow-md
                                     sm:px-4
                                 "
-                            >
+                                                    >
                                 <span className="hidden sm:inline">Explore</span>
                                 <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                             </span>
