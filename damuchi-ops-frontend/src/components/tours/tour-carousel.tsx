@@ -124,9 +124,8 @@ export function PremiumTourCarousel({
                     </p>
                 </div>
 
-                // landing page, under the featured tours
                 <Link
-                    href="/tours"
+                    href="/tour"
                     className="inline-flex h-12 items-center gap-2 rounded-full bg-coral px-7 text-sm font-semibold text-white"
                 >
                     View all tours
