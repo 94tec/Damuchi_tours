@@ -2,11 +2,8 @@
 
 import * as React from "react";
 import useEmblaCarousel from "embla-carousel-react";
-import {
-    ChevronLeft,
-    ChevronRight,
-    ArrowRight,
-} from "lucide-react";
+import { useReducedMotion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { TourCard } from "./tour-card";
@@ -18,12 +15,18 @@ interface PremiumTourCarouselProps {
     subtitle?: string;
 }
 
+const AUTOPLAY_MS = 5500;
+
 export function PremiumTourCarousel({
                                         tours,
                                         title = "Featured Safaris",
                                         subtitle = "Curated journeys across East Africa",
                                     }: PremiumTourCarouselProps) {
+    const shouldReduceMotion = useReducedMotion();
+
     const [selected, setSelected] = React.useState(0);
+    const [snapCount, setSnapCount] = React.useState(tours.length);
+    const pausedRef = React.useRef(false);
 
     const [emblaRef, emblaApi] = useEmblaCarousel({
         align: "start",
@@ -31,133 +34,159 @@ export function PremiumTourCarousel({
         loop: true,
     });
 
+    // Selected dot + real number of snap points
     React.useEffect(() => {
         if (!emblaApi) return;
 
-        const onSelect = () => {
+        const update = () => {
             setSelected(emblaApi.selectedScrollSnap());
+            setSnapCount(emblaApi.scrollSnapList().length);
         };
 
-        emblaApi.on("select", onSelect);
-        onSelect();
+        update();
+        emblaApi.on("select", update);
+        emblaApi.on("reInit", update);
 
         return () => {
-            emblaApi.off("select", onSelect);
+            emblaApi.off("select", update);
+            emblaApi.off("reInit", update);
         };
     }, [emblaApi]);
 
+    // Autoplay — pauses while the user is touching / hovering / focused,
+    // and is off entirely for reduced-motion users.
     React.useEffect(() => {
-        if (!emblaApi) return;
+        if (!emblaApi || shouldReduceMotion) return;
+
+        let resumeTimer: ReturnType<typeof setTimeout> | undefined;
+
+        const pause = () => {
+            pausedRef.current = true;
+            if (resumeTimer) clearTimeout(resumeTimer);
+        };
+        const resumeSoon = () => {
+            if (resumeTimer) clearTimeout(resumeTimer);
+            resumeTimer = setTimeout(() => {
+                pausedRef.current = false;
+            }, AUTOPLAY_MS);
+        };
+
+        emblaApi.on("pointerDown", pause);
+        emblaApi.on("pointerUp", resumeSoon);
 
         const interval = setInterval(() => {
-            emblaApi.scrollNext();
-        }, 5500);
+            if (!pausedRef.current) emblaApi.scrollNext();
+        }, AUTOPLAY_MS);
 
-        return () => clearInterval(interval);
-    }, [emblaApi]);
+        return () => {
+            clearInterval(interval);
+            if (resumeTimer) clearTimeout(resumeTimer);
+            emblaApi.off("pointerDown", pause);
+            emblaApi.off("pointerUp", resumeSoon);
+        };
+    }, [emblaApi, shouldReduceMotion]);
 
     return (
         <section
+            onMouseEnter={() => (pausedRef.current = true)}
+            onMouseLeave={() => (pausedRef.current = false)}
+            onFocusCapture={() => (pausedRef.current = true)}
+            onBlurCapture={() => (pausedRef.current = false)}
             className="
-        relative
-        overflow-hidden
-        rounded-[36px]
-        border
-        border-white/10
-        bg-white/[0.04]
-        backdrop-blur-2xl
-        shadow-[0_20px_80px_rgba(0,0,0,0.35)]
-        p-8
-      "
+                relative overflow-hidden rounded-3xl border border-white/10
+                bg-white/[0.04] p-4 backdrop-blur-2xl
+                shadow-[0_20px_80px_rgba(0,0,0,0.35)]
+                sm:rounded-[32px] sm:p-6 lg:rounded-[36px] lg:p-8
+            "
         >
             <div
                 aria-hidden="true"
                 className="
-          absolute
-          inset-0
-          pointer-events-none
-          bg-[radial-gradient(circle_at_top_right,rgba(255,115,0,.15),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(14,165,233,.15),transparent_35%)]
-        "
+                    pointer-events-none absolute inset-0
+                    bg-[radial-gradient(circle_at_top_right,rgba(255,115,0,.15),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(14,165,233,.15),transparent_35%)]
+                "
             />
 
-            <div className="relative z-10 mb-8 flex items-center justify-between">
-                <div>
-                    <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+            {/* Header */}
+            <div className="relative z-10 mb-5 flex items-end justify-between gap-4 sm:mb-8">
+                <div className="min-w-0">
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs sm:tracking-[0.25em]">
                         Premium Collection
                     </p>
 
-                    <h2 className="mt-2 text-3xl font-bold tracking-tight">
+                    <h2 className="mt-1.5 text-2xl font-bold tracking-tight sm:mt-2 sm:text-3xl">
                         {title}
                     </h2>
 
-                    <p className="mt-2 text-muted-foreground">
+                    <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2 sm:text-base">
                         {subtitle}
                     </p>
                 </div>
 
                 <Button
                     variant="outline"
-                    className="hidden gap-2 rounded-full md:flex"
+                    className="hidden shrink-0 gap-2 rounded-full md:flex"
                 >
                     View All
-
                     <ArrowRight className="h-4 w-4" />
                 </Button>
             </div>
 
-            <div
-                aria-hidden="true"
-                className="pointer-events-none absolute left-0 top-0 z-10 h-full w-32 bg-gradient-to-r from-background to-transparent"
-            />
+            {/* Viewport + edge fades (fades live here so they never cover the header) */}
+            <div className="relative z-10">
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-0 left-0 z-10 w-4 bg-gradient-to-r from-background/70 to-transparent sm:w-12 lg:w-24"
+                />
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-0 right-0 z-10 w-4 bg-gradient-to-l from-background/70 to-transparent sm:w-12 lg:w-24"
+                />
 
-            <div
-                aria-hidden="true"
-                className="pointer-events-none absolute right-0 top-0 z-10 h-full w-32 bg-gradient-to-l from-background to-transparent"
-            />
-
-            <div ref={emblaRef} className="overflow-hidden">
-                <div className="flex gap-6">
-                    {tours.map((tour) => (
-                        <div
-                            key={tour.id}
-                            className="
-                min-w-0
-                flex-[0_0_100%]
-
-                sm:flex-[0_0_70%]
-
-                lg:flex-[0_0_38%]
-
-                xl:flex-[0_0_32%]
-              "
-                        >
-                            <TourCard tour={tour} />
-                        </div>
-                    ))}
+                {/* py/-my gives hover-lift and shadows room before overflow clips */}
+                <div ref={emblaRef} className="-my-4 overflow-hidden py-4">
+                    {/* Negative margin + slide padding instead of `gap` — Embla's recommended pattern */}
+                    <div className="-ml-4 flex touch-pan-y sm:-ml-6">
+                        {tours.map((tour) => (
+                            <div
+                                key={tour.id}
+                                className="
+                                    min-w-0 flex-[0_0_88%] pl-4
+                                    sm:flex-[0_0_62%] sm:pl-6
+                                    lg:flex-[0_0_40%]
+                                    xl:flex-[0_0_32%]
+                                "
+                            >
+                                <TourCard tour={tour} />
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            <div className="mt-8 flex justify-center gap-2">
-                {tours.map((_, index) => (
-                    <button
-                        key={index}
-                        type="button"
-                        onClick={() => emblaApi?.scrollTo(index)}
-                        aria-label={`Go to tour ${index + 1}`}
-                        className={`
-              h-2
-              rounded-full
-              transition-all
-              duration-300
-              ${
-                            selected === index
-                                ? "w-8 bg-primary"
-                                : "w-2 bg-muted"
-                        }
-            `}
-                    />
-                ))}
-            </div>
+            {/* Dots — 24px touch targets around the small visual dot */}
+            {snapCount > 1 && (
+                <div className="relative z-10 mt-4 flex flex-wrap justify-center sm:mt-6">
+                    {Array.from({ length: snapCount }).map((_, index) => (
+                        <button
+                            key={index}
+                            type="button"
+                            onClick={() => emblaApi?.scrollTo(index)}
+                            aria-label={`Go to slide ${index + 1}`}
+                            aria-current={selected === index}
+                            className="group/dot p-1.5"
+                        >
+                            <span
+                                className={`block h-2 rounded-full transition-all duration-300 ${
+                                    selected === index
+                                        ? "w-8 bg-primary"
+                                        : "w-2 bg-muted group-hover/dot:bg-muted-foreground/50"
+                                }`}
+                            />
+                        </button>
+                    ))}
+                </div>
+            )}
         </section>
     );
 }
