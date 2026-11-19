@@ -256,7 +256,7 @@ export function NotFoundView() {
                     </Link>
 
                     <Link
-                        href="/tours"
+                        href="/tour"
                         className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-7 text-sm font-semibold text-white backdrop-blur transition-all hover:-translate-y-0.5 hover:bg-white/[0.12] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:w-auto"
                     >
                         <Compass className="h-4 w-4" />

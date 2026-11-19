@@ -109,29 +109,47 @@ export function PremiumTourCarousel({
             />
 
             {/* Header */}
-            <div className="relative z-10 mb-5 flex items-end justify-between gap-4 sm:mb-8">
-                <div className="min-w-0">
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs sm:tracking-[0.25em]">
+            <header className="relative z-10 mb-5 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2 sm:mb-8 sm:gap-x-6">
+                {/* Eyebrow + title */}
+                <div className="col-start-1 row-start-1 min-w-0">
+                    <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground sm:text-xs sm:tracking-[0.25em]">
                         Premium Collection
                     </p>
 
-                    <h2 className="mt-1.5 text-2xl font-bold tracking-tight sm:mt-2 sm:text-3xl">
+                    <h2 className="mt-1.5 text-balance text-2xl font-bold leading-tight tracking-tight sm:mt-2 sm:text-3xl">
                         {title}
                     </h2>
-
-                    <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2 sm:text-base">
-                        {subtitle}
-                    </p>
                 </div>
 
+                {/* Subtitle: full width on phones, under the title from sm up */}
+                <p className="col-span-2 col-start-1 row-start-2 max-w-xl text-sm leading-6 text-muted-foreground sm:col-span-1 sm:text-base">
+                    {subtitle}
+                </p>
+
+                {/* Action: compact pill on phones, full button from sm up */}
                 <Link
                     href="/tour"
-                    className="inline-flex h-12 items-center gap-2 rounded-full bg-coral px-7 text-sm font-semibold text-white"
+                    className="
+                        group col-start-2 row-start-1 inline-flex h-10 shrink-0
+                        items-center gap-1.5 self-end whitespace-nowrap rounded-full
+                        bg-coral px-4 text-sm font-semibold text-white shadow-sm
+                        shadow-coral/20 transition-all duration-300
+                        hover:-translate-y-0.5 hover:shadow-md hover:shadow-coral/30
+                        active:scale-[0.97]
+                        focus-visible:outline-none focus-visible:ring-2
+                        focus-visible:ring-coral focus-visible:ring-offset-2
+                        sm:row-span-2 sm:h-12 sm:gap-2 sm:px-7
+                    "
                 >
-                    View all tours
-                    <ArrowRight className="h-4 w-4" />
+                    <span className="sm:hidden">View all</span>
+                    <span className="hidden sm:inline">View all tours</span>
+
+                    <ArrowRight
+                        className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5"
+                        aria-hidden="true"
+                    />
                 </Link>
-            </div>
+            </header>
 
             {/* Viewport + edge fades (fades live here so they never cover the header) */}
             <div className="relative z-10">

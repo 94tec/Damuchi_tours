@@ -152,6 +152,8 @@ const COUNTRY_COUNTS = DESTINATIONS.reduce<Record<Country, number>>(
     Rwanda: 0,
   },
 );
+const DESTINATION_COUNT = DESTINATIONS.length;
+const COUNTRY_COUNT = new Set(DESTINATIONS.map((d) => d.country)).size;
 
 export function DestinationsStrip() {
   const [filter, setFilter] =
@@ -297,15 +299,26 @@ export function DestinationsStrip() {
             </p>
           </div>
 
-          <div className="hidden shrink-0 text-right sm:block">
-            <p className="font-display text-3xl font-semibold tracking-tight text-foreground">
-              {DESTINATIONS.length}
-            </p>
+          <dl className="grid w-full shrink-0 grid-cols-2 divide-x divide-border/70 rounded-2xl border border-border/70 bg-muted/30 sm:flex sm:w-auto sm:items-end sm:gap-6 sm:divide-x-0 sm:rounded-none sm:border-0 sm:bg-transparent">
+            <div className="flex flex-col-reverse px-4 py-3 text-center sm:px-0 sm:py-0 sm:text-right">
+              <dt className="mt-1.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground sm:text-xs">
+                <span className="sm:hidden">Destinations</span>
+                <span className="hidden sm:inline">Featured destinations</span>
+              </dt>
+              <dd className="font-display text-2xl font-semibold leading-none tracking-tight tabular-nums text-foreground sm:text-3xl">
+                {DESTINATION_COUNT}
+              </dd>
+            </div>
 
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-              Featured destinations
-            </p>
-          </div>
+            <div className="flex flex-col-reverse px-4 py-3 text-center sm:border-l sm:border-border/70 sm:px-0 sm:py-0 sm:pl-6 sm:text-right">
+              <dt className="mt-1.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground sm:text-xs">
+                Countries
+              </dt>
+              <dd className="font-display text-2xl font-semibold leading-none tracking-tight tabular-nums text-foreground sm:text-3xl">
+                {COUNTRY_COUNT}
+              </dd>
+            </div>
+          </dl>
         </motion.div>
 
         {/* ═══════════════════════════════════════════

@@ -13,58 +13,38 @@ module.exports = {
     extend: {
       // ── Colors ──────────────────────────────────────────────────────────────
       colors: {
-        // HSL-based theme system (from first config)
+        // shadcn theme tokens (values live in globals.css as HSL variables)
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-        success: {
-          DEFAULT: "hsl(var(--success))",
-          foreground: "hsl(var(--success-foreground))",
-        },
-        warning: {
-          DEFAULT: "hsl(var(--warning))",
-          foreground: "hsl(var(--warning-foreground))",
+        primary: { DEFAULT: "hsl(var(--primary))", foreground: "hsl(var(--primary-foreground))" },
+        secondary: { DEFAULT: "hsl(var(--secondary))", foreground: "hsl(var(--secondary-foreground))" },
+        destructive: { DEFAULT: "hsl(var(--destructive))", foreground: "hsl(var(--destructive-foreground))" },
+        muted: { DEFAULT: "hsl(var(--muted))", foreground: "hsl(var(--muted-foreground))" },
+        accent: { DEFAULT: "hsl(var(--accent))", foreground: "hsl(var(--accent-foreground))" },
+        popover: { DEFAULT: "hsl(var(--popover))", foreground: "hsl(var(--popover-foreground))" },
+        card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
+        success: { DEFAULT: "hsl(var(--success))", foreground: "hsl(var(--success-foreground))" },
+        warning: { DEFAULT: "hsl(var(--warning))", foreground: "hsl(var(--warning-foreground))" },
+
+        // Brand
+        savanna: "#C8860A",
+        earth: "#2C1810",
+        dust: "#F5EFE6",
+        canopy: "#1A3A2A",
+        stone: "#8C7B6B",   // overrides Tailwind's stone scale, consider "brand-stone"
+        sky: "#E8F4F8",     // overrides Tailwind's sky scale, consider "brand-sky"
+        coral: "#FF6B35",
+        forest: {
+          950: "#0B2A22",
+          900: "#0F3329",
+          800: "#123D32",
+          700: "#1A5444",
+          600: "#237058",
         },
 
-        // Legacy/Static color palette (from second config)
-        savanna: "#C8860A",   // warm amber/gold — primary accent
-        earth: "#2C1810",    // deep mahogany — dark surfaces, primary text
-        dust: "#F5EFE6",     // bone-white — light background
-        canopy: "#1A3A2A",   // deep forest green — staff/ops contexts
-        stone: "#8C7B6B",    // warm mid-grey — muted text, borders
-        sky: "#E8F4F8",      // pale morning blue — hover, subtle fills
-
-        // Expedition palette (from first config)
         expedition: {
           forest: "#0B1F1A",
           sand: "#F5F1E8",
@@ -74,16 +54,7 @@ module.exports = {
           rust: "#8B2E2E",
         },
 
-        // Semantic aliases (from second config)
-        background: "#F5EFE6",
-        foreground: "#2C1810",
-        muted: "#8C7B6B",
-        accent: "#C8860A",
         "accent-dark": "#9B6508",
-        border: "#DDD3C7",
-        card: "#FFFFFF",
-
-        // Status colours (from second config)
         "status-pending": "#D97706",
         "status-confirmed": "#15803D",
         "status-cancelled": "#DC2626",

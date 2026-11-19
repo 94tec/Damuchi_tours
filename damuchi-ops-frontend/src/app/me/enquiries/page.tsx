@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { StatusFilter, type StatusFilterOption } from "@/components/landing/enquiry/status-filter";
 
 import {
     Dialog,
@@ -133,8 +134,27 @@ const STATUS_ICONS: Record<TourEnquiryStatus, React.ElementType> = {
     ARCHIVED: XCircle,
 };
 
-const ENTER =
-    "animate-in fade-in slide-in-from-bottom-2 duration-500 motion-reduce:animate-none";
+const FILTER_DOTS: Record<TourEnquiryStatus, string> = {
+    NEW: "bg-amber-500",
+    CONTACTED: "bg-blue-500",
+    QUOTED: "bg-coral",
+    CONVERTED: "bg-emerald-500",
+    COMPLETED: "bg-teal-500",
+    LOST: "bg-red-500",
+    ARCHIVED: "bg-muted-foreground",
+};
+
+const FILTER_OPTIONS: StatusFilterOption<TourEnquiryStatus | "ALL">[] = [
+    { value: "ALL", label: "All enquiries" },
+    ...FILTERABLE_STATUSES.map((s) => ({
+        value: s,
+        label: STATUS_COPY[s].label,
+        dotClassName: FILTER_DOTS[s],
+    })),
+];
+
+const ENTER = "animate-in fade-in slide-in-from-bottom-2 duration-500 motion-reduce:animate-none";
+const HERO_BG = "bg-gradient-to-br from-[#123D32] via-[#0F3329] to-[#0B2A22]";
 
 /* ============================================================
    HELPERS
@@ -384,7 +404,7 @@ function SupportCard({ title, text }: { title: string; text: string }) {
                         className="h-10 rounded-xl bg-background"
                         asChild
                     >
-                        <a href="mailto:support@damuchi.com">
+                        <a href="mailto:support@kivanasafaris.com">
                             <Mail className="h-3.5 w-3.5" />
                             Email us
                         </a>
@@ -397,7 +417,7 @@ function SupportCard({ title, text }: { title: string; text: string }) {
                         asChild
                     >
                         <a
-                            href="https://wa.me/254700000000"
+                            href="https://wa.me/+254185528874"
                             target="_blank"
                             rel="noreferrer"
                         >
@@ -587,10 +607,10 @@ function EnquiryDetailPanel({
             </button>
 
             {/* Hero */}
-            <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 p-5 text-white shadow-xl shadow-forest-950/10 sm:p-8">
+            <section className={`relative isolate overflow-hidden rounded-3xl ${HERO_BG} p-5 text-white shadow-xl shadow-emerald-950/10 sm:p-8`}>
                 <HeroBackdrop />
 
-                <div className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 p-5 text-white shadow-xl shadow-forest-950/10 sm:p-8">
+                <div className="relative z-10">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/80 backdrop-blur-sm">
                             <MapPin className="h-3 w-3 text-coral" />
@@ -999,54 +1019,6 @@ function EnquiryCard({
 }
 
 /* ============================================================
-   FILTER CHIPS
-============================================================ */
-
-function FilterChips({
-                         value,
-                         onChange,
-                     }: {
-    value: TourEnquiryStatus | "ALL";
-    onChange: (value: TourEnquiryStatus | "ALL") => void;
-}) {
-    const options: Array<{ value: TourEnquiryStatus | "ALL"; label: string }> = [
-        { value: "ALL", label: "All" },
-        ...FILTERABLE_STATUSES.map((s) => ({
-            value: s,
-            label: STATUS_COPY[s].label,
-        })),
-    ];
-
-    return (
-        <div
-            role="group"
-            aria-label="Filter enquiries by status"
-            className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden"
-        >
-            {options.map((option) => {
-                const active = option.value === value;
-
-                return (
-                    <button
-                        key={option.value}
-                        type="button"
-                        aria-pressed={active}
-                        onClick={() => onChange(option.value)}
-                        className={`h-9 shrink-0 rounded-full border px-4 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral ${
-                            active
-                                ? "border-forest-900 bg-forest-900 text-white shadow-sm dark:border-emerald-600 dark:bg-emerald-700"
-                                : "border-border/70 bg-background text-muted-foreground hover:border-coral/40 hover:text-foreground"
-                        }`}
-                    >
-                        {option.label}
-                    </button>
-                );
-            })}
-        </div>
-    );
-}
-
-/* ============================================================
    MAIN PAGE
 ============================================================ */
 
@@ -1285,18 +1257,18 @@ export default function MyEnquiriesPage() {
 
                 {/* List + filters */}
                 <section className="space-y-4">
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         <div>
                             <h2 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">
                                 Your safari requests
                             </h2>
                             <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm">
-                                Select an enquiry to see its progress and
-                                quotation details.
+                                Select an enquiry to see its progress and quotation details.
                             </p>
                         </div>
 
-                        <FilterChips
+                        <StatusFilter
+                            options={FILTER_OPTIONS}
                             value={statusFilter}
                             onChange={setStatusFilter}
                         />

@@ -12,6 +12,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 
+import { CategoryFilter } from "@/components/landing/category-filter";
 import { TourShowcaseSection } from "@/components/tours/tour-showcase-section";
 import { TourCardSkeleton } from "@/components/tours/tour-card-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -30,6 +31,12 @@ const CATEGORIES = Object.entries(CATEGORY_LABELS) as [
     TourCategory,
     string,
 ][];
+
+const CATEGORY_OPTIONS = CATEGORIES.map(([value, label]) => ({
+    value,
+    label,
+    emoji: CATEGORY_EMOJI[value],
+}));
 
 const PAGE_SIZE = 12;
 
@@ -411,98 +418,11 @@ export function TourGrid({
                     }}
                     className="mt-8"
                 >
-                    <div
-                        className="
-                            flex
-                            items-center
-                            justify-center
-                            gap-2
-                            text-xs
-                            font-medium
-                            uppercase
-                            tracking-wider
-                            text-muted-foreground
-                        "
-                    >
-                        <SlidersHorizontal
-                            className="h-3.5 w-3.5"
-                            aria-hidden="true"
-                        />
-
-                        <span>
-                            Explore by experience
-                        </span>
-                    </div>
-
-                    <div
-                        className="
-                            mt-4
-                            flex
-                            flex-wrap
-                            items-center
-                            justify-center
-                            gap-2
-                        "
-                        role="group"
-                        aria-label="Filter tours by category"
-                    >
-                        <button
-                            type="button"
-                            onClick={() =>
-                                handleCategoryClick(null)
-                            }
-                            aria-pressed={
-                                activeCategory === null
-                            }
-                            className={cn(
-                                "rounded-full border px-4 py-2 text-sm font-medium",
-                                "transition-all duration-200",
-                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                                activeCategory === null
-                                    ? "border-accent bg-accent text-accent-foreground shadow-sm shadow-accent/20"
-                                    : "border-border bg-background/70 text-muted-foreground hover:border-accent/40 hover:bg-accent/5 hover:text-foreground",
-                            )}
-                        >
-                            All tours
-                        </button>
-
-                        {CATEGORIES.map(
-                            ([value, label]) => {
-                                const active =
-                                    activeCategory === value;
-
-                                return (
-                                    <button
-                                        key={value}
-                                        type="button"
-                                        onClick={() =>
-                                            handleCategoryClick(
-                                                value,
-                                            )
-                                        }
-                                        aria-pressed={active}
-                                        className={cn(
-                                            "rounded-full border px-4 py-2 text-sm font-medium",
-                                            "transition-all duration-200",
-                                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                                            active
-                                                ? "border-accent bg-accent text-accent-foreground shadow-sm shadow-accent/20"
-                                                : "border-border bg-background/70 text-muted-foreground hover:border-accent/40 hover:bg-accent/5 hover:text-foreground",
-                                        )}
-                                    >
-                                        <span aria-hidden="true">
-                                            {
-                                                CATEGORY_EMOJI[
-                                                    value
-                                                    ]
-                                            }
-                                        </span>{" "}
-                                        {label}
-                                    </button>
-                                );
-                            },
-                        )}
-                    </div>
+                    <CategoryFilter
+                        options={CATEGORY_OPTIONS}
+                        value={activeCategory}
+                        onChange={handleCategoryClick}
+                    />
                 </motion.div>
 
                 {/* Result summary */}

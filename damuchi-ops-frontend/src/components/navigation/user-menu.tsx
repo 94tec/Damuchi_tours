@@ -5,7 +5,6 @@ import {
     Bell,
     LayoutDashboard,
     LogOut,
-    Settings,
     User,
 } from "lucide-react";
 

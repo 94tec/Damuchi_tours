@@ -259,7 +259,7 @@ export default function MeOverviewPage() {
                                     asChild
                                     className="h-11 rounded-xl bg-white px-5 text-[#173D35] shadow-md hover:bg-emerald-50"
                                 >
-                                    <Link href="/tours">
+                                    <Link href="/tour">
                                         Explore safaris
                                         <ArrowUpRight className="ml-2 h-4 w-4" />
                                     </Link>
@@ -324,13 +324,16 @@ export default function MeOverviewPage() {
                     description="Important updates and outstanding actions."
                     trailing={
                         <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                            aria-label={`${attentionCount} ${
+                                attentionCount === 1 ? "item needs" : "items need"
+                            } attention`}
+                            className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
                                 attentionCount > 0
                                     ? "bg-coral/10 text-coral"
                                     : "bg-muted text-muted-foreground"
                             }`}
                         >
-                            {attentionCount} {attentionCount === 1 ? "item" : "items"}
+                          {attentionCount} {attentionCount === 1 ? "item" : "items"}
                         </span>
                     }
                 />
@@ -356,7 +359,7 @@ export default function MeOverviewPage() {
                                 variant="outline"
                                 className="mt-5 h-10 w-full rounded-xl sm:w-auto"
                             >
-                                <Link href="/tours">
+                                <Link href="/tour">
                                     Browse destinations
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </Link>
