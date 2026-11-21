@@ -92,7 +92,7 @@ export function EnquiryModalHeader({
 
                 {isTwoStep && (
                     <div
-                        className="mt-2 flex items-center gap-1.5"
+                        className="mt-2.5 flex items-center gap-1.5"
                         role="progressbar"
                         aria-valuemin={1}
                         aria-valuemax={2}
