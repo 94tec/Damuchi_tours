@@ -124,6 +124,8 @@ export function EnquiryModal({
                         pricePerPerson={priceOf(selectedTour)}
                         currency={selectedTour.currency ?? undefined}
                         source={source}
+                        hideTourContext
+                        hideTrustNote
                         onSuccess={() => handleOpenChange(false)}
                     />
                 </motion.div>
