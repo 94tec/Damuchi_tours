@@ -287,10 +287,12 @@ export function TourCard({ tour }: TourCardProps) {
                                 </div>
                             )}
 
-                            {/* Explore: decorative. No z-index, so clicks fall through to the link */}
-                            <span
-                                aria-hidden="true"
+                            {/* Explore: real link, sits above the card's stretched link */}
+                            <Link
+                                href={`/tour/${tour.slug}`}
+                                aria-label={`Explore ${tour.name}`}
                                 className="
+                                    relative z-10
                                     inline-flex h-9 shrink-0 items-center justify-center gap-1.5
                                     rounded-full border border-border bg-background px-3
                                     text-xs font-semibold text-foreground shadow-sm
@@ -299,10 +301,13 @@ export function TourCard({ tour }: TourCardProps) {
                                     group-hover:text-accent-foreground group-hover:shadow-md
                                     sm:px-4
                                 "
-                                                    >
+                            >
                                 <span className="hidden sm:inline">Explore</span>
-                                <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                            </span>
+                                <ArrowUpRight
+                                    aria-hidden="true"
+                                    className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                                />
+                            </Link>
                         </div>
                     </div>
                 </div>
