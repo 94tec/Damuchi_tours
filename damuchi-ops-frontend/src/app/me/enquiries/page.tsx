@@ -435,18 +435,6 @@ function SupportCard({ title, text }: { title: string; text: string }) {
 /* ============================================================
    ACCEPT QUOTE DIALOG
 ============================================================ */
-
-/**
- * Drop-in replacement for the `AcceptQuoteDialog` function in the
- * "My enquiries" page. It uses the same page-local helpers as before
- * (HeroBackdrop, PriceBreakdown, formatAmount, formatDate,
- * getApiErrorMessage, enquiryApi, toast), so nothing else changes.
- *
- * Imports to add/confirm at the top of the page:
- *   import { AlertTriangle, Check, RefreshCw, Sparkles, X } from "lucide-react";
- *   import { useEffect, useState } from "react";
- */
-
 function AcceptQuoteDialog({
                                open,
                                quote,
@@ -509,10 +497,14 @@ function AcceptQuoteDialog({
         >
             {/*
               Header stays pinned, body scrolls, actions stay pinned.
-              The built-in close (X) is hidden: the header renders its own,
+              The built-in close (X) is hidden (hideClose): the header renders its own,
               in normal flow, so it's visible on the dark background.
             */}
-            <DialogContent className="flex max-h-[92dvh] w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden rounded-3xl border-border/60 p-0 sm:max-w-md [&>button]:hidden">
+            <DialogContent
+                hideClose
+                overlayClassName="bg-[#0A0F12]/85 backdrop-blur-md"
+                className="flex max-h-[92dvh] w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden rounded-3xl border-border/60 p-0 sm:max-w-md"
+            >
                 {/* ───────────── Header ───────────── */}
                 <div className="relative isolate shrink-0 overflow-hidden bg-gradient-to-br from-[#123D32] via-[#0F3329] to-[#0B2A22] text-white">
                     <HeroBackdrop />

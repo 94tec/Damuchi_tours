@@ -216,20 +216,20 @@ export function EnquiryModal({
             </DialogTrigger>
 
             {/*
-              Phones : full-screen sheet.
-              ≥ sm   : centred rounded card.
-              The dialog's built-in close button is hidden ([&>button]:hidden);
-              the header renders its own X in normal flow so it can never
-              overlap the title or label.
+              Phones : rounded card with a small margin, so the charcoal
+                       overlay stays visible around it.
+              ≥ sm   : centred card.
+              The built-in close (X) is hidden (hideClose): the header
+              renders its own, in normal flow, so it can't overlap anything.
             */}
             <DialogContent
+                hideClose
                 className="
-                    flex h-[100dvh] w-full max-w-none flex-col gap-0 overflow-hidden
-                    rounded-none border-0 bg-background p-0 shadow-2xl
-                    sm:h-auto sm:max-h-[min(780px,92dvh)] sm:max-w-[560px]
-                    sm:rounded-3xl sm:border sm:border-border/60
+                    flex h-[calc(100dvh-1.5rem)] max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)]
+                    max-w-none flex-col gap-0 overflow-hidden rounded-3xl border
+                    border-border/60 bg-background p-0 shadow-2xl
+                    sm:h-auto sm:max-h-[min(780px,92dvh)] sm:w-full sm:max-w-[560px]
                     lg:max-w-[620px]
-                    [&>button]:hidden
                 "
             >
                 <EnquiryModalHeader
