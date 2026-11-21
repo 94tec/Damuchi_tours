@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { TourCard } from "@/components/tours/tour-card";
 import { TourCardSkeleton } from "@/components/tours/tour-card-skeleton"; // adjust path if different
 import type { TourSummary } from "@/types/tour";
-import { PAGE_STEP } from "../../hooks/tours-config";
+import { PAGE_STEP } from "@/hooks/tours-config";
 
 export interface ActiveFilter {
     key: string;
