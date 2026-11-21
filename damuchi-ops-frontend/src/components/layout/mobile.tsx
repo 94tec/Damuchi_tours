@@ -165,21 +165,21 @@ export function MobileNav({
                         <>
                             <div className="my-2 border-t border-gray-100" />
                             <Link
-                                href="/enquiries"
+                                href="/me/enquiries"
                                 onClick={close}
                                 className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                             >
                                 <MessagesSquare className="h-4 w-4 text-coral" /> My Enquiries
                             </Link>
                             <Link
-                                href="/wishlist"
+                                href="/me/wishlist"
                                 onClick={close}
                                 className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                             >
                                 <Heart className="h-4 w-4 text-coral" /> Saved Tours
                             </Link>
                             <Link
-                                href="/profile"
+                                href="/me/profile"
                                 onClick={close}
                                 className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                             >
