@@ -57,7 +57,7 @@ export function TourCard({ tour }: TourCardProps) {
                         >
                             {/* Stretched link: covers the whole card */}
                             <Link
-                                href={`/tours/${tour.slug}`}
+                                href={`/tour/${tour.slug}`}
                                 aria-label={`View ${tour.name}`}
                                 className="
                         absolute inset-0 z-10 rounded-2xl sm:rounded-3xl
