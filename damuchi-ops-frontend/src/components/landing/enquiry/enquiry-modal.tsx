@@ -216,8 +216,9 @@ export function EnquiryModal({
             {/*
               Phones : full-screen sheet.
               ≥ sm   : centred rounded card.
-              [&>button] restyles the dialog's built-in close (X) so it is
-              visible on the dark header.
+              The dialog's built-in close button is hidden ([&>button]:hidden);
+              the header renders its own X in normal flow so it can never
+              overlap the title or label.
             */}
             <DialogContent
                 className="
@@ -226,14 +227,7 @@ export function EnquiryModal({
                     sm:h-auto sm:max-h-[min(780px,92dvh)] sm:max-w-[560px]
                     sm:rounded-3xl sm:border sm:border-border/60
                     lg:max-w-[620px]
-                    [&>button]:right-4 [&>button]:top-4 [&>button]:z-20
-                    [&>button]:flex [&>button]:h-9 [&>button]:w-9
-                    [&>button]:items-center [&>button]:justify-center
-                    [&>button]:rounded-full [&>button]:border
-                    [&>button]:border-white/20 [&>button]:bg-white/10
-                    [&>button]:text-white [&>button]:opacity-100
-                    [&>button]:backdrop-blur-sm
-                    [&>button]:hover:bg-white/20
+                    [&>button]:hidden
                 "
             >
                 <EnquiryModalHeader
@@ -243,6 +237,7 @@ export function EnquiryModal({
                     onSearchChange={setSearch}
                     showSearch={status === "ready" && tours.length > 0}
                     onChangeTour={handleChangeTour}
+                    onClose={() => handleOpenChange(false)}
                 />
 
                 <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
@@ -252,7 +247,7 @@ export function EnquiryModal({
                 </div>
 
                 <div className="shrink-0 border-t border-border/60 bg-background px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-3.5">
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center justify-center gap-3 sm:justify-between">
                         <p className="flex items-center gap-2 text-[11px] leading-4 text-muted-foreground">
                             <ShieldCheck
                                 className="h-4 w-4 shrink-0 text-emerald-600"
@@ -266,7 +261,7 @@ export function EnquiryModal({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleOpenChange(false)}
-                            className="h-9 shrink-0 rounded-full px-4"
+                            className="hidden h-9 shrink-0 rounded-full px-4 sm:inline-flex"
                         >
                             Close
                         </Button>

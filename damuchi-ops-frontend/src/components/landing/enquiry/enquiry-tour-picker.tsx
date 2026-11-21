@@ -114,7 +114,7 @@ function TourOption({
                 )}
             </div>
 
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/70 text-muted-foreground transition-all group-hover:border-coral group-hover:bg-coral group-hover:text-white">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/70 sm:h-9 sm:w-9 text-muted-foreground transition-all group-hover:border-coral group-hover:bg-coral group-hover:text-white">
                 <ArrowRight
                     className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
                     aria-hidden="true"
