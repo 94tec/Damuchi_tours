@@ -22,6 +22,7 @@ import {
     Users,
     Wallet,
     XCircle,
+    X
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -435,6 +436,17 @@ function SupportCard({ title, text }: { title: string; text: string }) {
    ACCEPT QUOTE DIALOG
 ============================================================ */
 
+/**
+ * Drop-in replacement for the `AcceptQuoteDialog` function in the
+ * "My enquiries" page. It uses the same page-local helpers as before
+ * (HeroBackdrop, PriceBreakdown, formatAmount, formatDate,
+ * getApiErrorMessage, enquiryApi, toast), so nothing else changes.
+ *
+ * Imports to add/confirm at the top of the page:
+ *   import { AlertTriangle, Check, RefreshCw, Sparkles, X } from "lucide-react";
+ *   import { useEffect, useState } from "react";
+ */
+
 function AcceptQuoteDialog({
                                open,
                                quote,
@@ -447,9 +459,19 @@ function AcceptQuoteDialog({
     onAccepted: () => void;
 }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [agreed, setAgreed] = useState(false);
+
+    // Always start unticked for each quote / each opening
+    useEffect(() => {
+        if (!open) setAgreed(false);
+    }, [open, quote?.id]);
+
+    const expired = quote?.validUntil
+        ? new Date(quote.validUntil).getTime() < Date.now()
+        : false;
 
     async function handleAccept() {
-        if (!quote || isSubmitting) return;
+        if (!quote || isSubmitting || !agreed || expired) return;
 
         setIsSubmitting(true);
 
@@ -478,65 +500,143 @@ function AcceptQuoteDialog({
     if (!quote) return null;
 
     return (
-        <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
-            <DialogContent className="max-h-[92dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-3xl p-0 sm:max-w-md">
-                <div className="relative overflow-hidden bg-gradient-to-br from-forest-950 via-forest-900 to-emerald-950 px-6 py-7 text-white">
+        <Dialog
+            open={open}
+            // Don't let overlay click / Esc dismiss while the request is in flight
+            onOpenChange={(value) => {
+                if (!value && !isSubmitting) onClose();
+            }}
+        >
+            {/*
+              Header stays pinned, body scrolls, actions stay pinned.
+              The built-in close (X) is hidden: the header renders its own,
+              in normal flow, so it's visible on the dark background.
+            */}
+            <DialogContent className="flex max-h-[92dvh] w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden rounded-3xl border-border/60 p-0 sm:max-w-md [&>button]:hidden">
+                {/* ───────────── Header ───────────── */}
+                <div className="relative isolate shrink-0 overflow-hidden bg-gradient-to-br from-[#123D32] via-[#0F3329] to-[#0B2A22] text-white">
                     <HeroBackdrop />
 
-                    <div className="relative">
-                        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm">
-                            <Sparkles className="h-5 w-5 text-coral" />
+                    <DialogHeader className="relative space-y-0 p-0 text-left sm:text-left">
+                        {/* gap-based spacing: immune to DialogHeader's space-y rules */}
+                        <div className="flex flex-col gap-4 px-5 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5">
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm">
+                                    <Sparkles className="h-5 w-5 text-coral" aria-hidden="true" />
+                                </span>
+
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    disabled={isSubmitting}
+                                    aria-label="Close"
+                                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/90 transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral disabled:pointer-events-none disabled:opacity-50"
+                                >
+                                    <X className="h-4 w-4" aria-hidden="true" />
+                                </button>
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <DialogTitle className="font-display text-xl font-semibold leading-tight text-white sm:text-2xl">
+                                    Ready for your adventure?
+                                </DialogTitle>
+
+                                <DialogDescription className="text-sm leading-6 text-white/70">
+                                    Review your quote and confirm that you would like to
+                                    proceed.
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+                </div>
+
+                {/* ───────────── Scrolling body ───────────── */}
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                    <div className="flex flex-col gap-4 p-5 sm:p-6">
+                        {/* Total */}
+                        <div className="rounded-2xl border border-coral/20 bg-gradient-to-br from-coral/[0.08] to-transparent p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-coral">
+                                Your quoted total
+                            </p>
+
+                            <p className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
+                                {formatAmount(quote.totalPrice, quote.currency)}
+                            </p>
+
+                            <PriceBreakdown quote={quote} />
                         </div>
 
-                        <DialogHeader className="text-left">
-                            <DialogTitle className="font-display text-2xl font-semibold text-white">
-                                Ready for your adventure?
-                            </DialogTitle>
-                            <DialogDescription className="mt-2 text-sm leading-6 text-white/70">
-                                Review your quote and confirm that you would
-                                like to proceed.
-                            </DialogDescription>
-                        </DialogHeader>
+                        {/* Validity */}
+                        {expired ? (
+                            <div
+                                role="alert"
+                                className="flex items-start gap-2.5 rounded-2xl border border-destructive/30 bg-destructive/5 p-3.5 text-xs leading-5 text-destructive"
+                            >
+                                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                                <span>
+                                    This quote expired on{" "}
+                                    <span className="font-semibold">
+                                        {formatDate(quote.validUntil)}
+                                    </span>
+                                    . Please contact us for an updated quote.
+                                </span>
+                            </div>
+                        ) : (
+                            quote.validUntil && (
+                                <p className="text-center text-xs text-muted-foreground">
+                                    This quote is valid until{" "}
+                                    <span className="font-semibold text-foreground">
+                                        {formatDate(quote.validUntil)}
+                                    </span>
+                                </p>
+                            )
+                        )}
+
+                        {/* What's included */}
+                        {quote.inclusionsNote && (
+                            <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                                    What&apos;s included
+                                </p>
+                                <p className="mt-2 max-h-28 overflow-y-auto whitespace-pre-wrap text-xs leading-5 text-foreground/80">
+                                    {quote.inclusionsNote}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Explicit agreement */}
+                        <label
+                            className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors ${
+                                agreed
+                                    ? "border-coral/30 bg-coral/[0.05]"
+                                    : "border-border/70 bg-muted/30 hover:bg-muted/50"
+                            } ${isSubmitting || expired ? "pointer-events-none opacity-60" : ""}`}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={agreed}
+                                onChange={(event) => setAgreed(event.target.checked)}
+                                disabled={isSubmitting || expired}
+                                className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded accent-coral"
+                            />
+
+                            <span className="min-w-0">
+                                <span className="block text-sm font-semibold">
+                                    I agree to the quote and payment terms
+                                </span>
+                                <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                                    By accepting, you confirm the quoted price and payment
+                                    terms. Payment instructions will be provided after
+                                    acceptance.
+                                </span>
+                            </span>
+                        </label>
                     </div>
                 </div>
 
-                <div className="space-y-5 p-5 sm:p-6">
-                    <div className="rounded-2xl border border-coral/20 bg-gradient-to-br from-coral/[0.08] to-transparent p-4">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-coral">
-                            Your quoted total
-                        </p>
-
-                        <p className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">
-                            {formatAmount(quote.totalPrice, quote.currency)}
-                        </p>
-
-                        <PriceBreakdown quote={quote} />
-                    </div>
-
-                    <div className="flex gap-3 rounded-2xl border border-border/70 bg-muted/30 p-4">
-                        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
-
-                        <div>
-                            <p className="text-sm font-semibold">Payment terms</p>
-                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                                By accepting this quote, you confirm that you
-                                agree to the quoted price and payment terms.
-                                Payment instructions will be provided after
-                                acceptance.
-                            </p>
-                        </div>
-                    </div>
-
-                    {quote.validUntil && (
-                        <p className="text-center text-xs text-muted-foreground">
-                            This quote is valid until{" "}
-                            <span className="font-semibold text-foreground">
-                                {formatDate(quote.validUntil)}
-                            </span>
-                        </p>
-                    )}
-
-                    <DialogFooter className="flex-col-reverse gap-2 sm:flex-row">
+                {/* ───────────── Pinned actions ───────────── */}
+                <div className="shrink-0 border-t border-border/60 bg-background px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pb-4">
+                    <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:space-x-0">
                         <Button
                             type="button"
                             variant="outline"
@@ -551,7 +651,7 @@ function AcceptQuoteDialog({
                             type="button"
                             variant="accent"
                             onClick={handleAccept}
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || !agreed || expired}
                             className="h-11 w-full rounded-xl shadow-sm sm:flex-1"
                         >
                             {isSubmitting ? (
