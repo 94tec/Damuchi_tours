@@ -1,98 +1,247 @@
-# authSys Frontend — Basecamp Staff Portal
+# AuthSys Frontend — Basecamp Staff Portal
 
-Next.js 14 + TypeScript + Tailwind CSS + shadcn/ui frontend for the **authSys** Tour ERP SaaS.
+AuthSys Frontend is the authentication and staff-administration portal for the Damuchi Tours platform. It provides secure access, onboarding, account management, role administration, and audit visibility for authorised users.
 
-## Stack
+Built with Next.js 14, TypeScript, Tailwind CSS, and shadcn/ui.
+
+## Features
+
+- User registration with approval workflow
+- Secure login
+- Multi-factor OTP verification
+- First-time password setup
+- Password reset
+- Profile management
+- Password management
+- Pending-user approval and rejection
+- User account locking and unlocking
+- Role and permission administration
+- Audit-log visibility
+- System settings
+- Responsive dashboard interface
+
+## Technology Stack
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 14 (App Router, TypeScript) |
-| Styling | Tailwind CSS + shadcn/ui (Radix UI primitives) |
-| Forms | react-hook-form + Zod |
-| State | Zustand (sessionStorage-persisted) |
-| HTTP | Axios with JWT interceptor + auto-refresh |
-| Notifications | Sonner toast |
+| Framework | Next.js 14 App Router |
+| Language | TypeScript |
+| Styling | Tailwind CSS |
+| UI components | shadcn/ui and Radix UI primitives |
+| Forms | React Hook Form |
+| Validation | Zod |
+| State management | Zustand |
+| HTTP client | Axios |
+| Notifications | Sonner |
 | Icons | Lucide React |
-| Fonts | Fraunces (display) · Inter (body) · JetBrains Mono (code) |
+| Fonts | Fraunces, Inter, JetBrains Mono |
 
-## Backend facts (from startup log)
+## Backend Integration
 
-- **Port**: 8001 (Netty/WebFlux reactive — not servlet)
-- **Auth**: Firebase Auth · project `spring-data-a3ebb`
-- **Documents**: Firestore (users, permissions, ACL, role-permissions)
-- **Relational**: PostgreSQL via HikariPool (tours, `idx_tour_slug` constraint)
-- **Cache**: Redis `localhost:6379` · 2s command timeout
-- **Email**: Brevo (primary) · Gmail SMTP (secondary)
-- **SMS**: Africa's Talking (OTP delivery for Kenya +254 numbers)
-- **Roles seeded**: SUPER_ADMIN(27), ADMIN(27), MANAGER(14), OPERATOR(11), USER(7), GUEST(1)
+The AuthSys frontend communicates with the Spring Boot AuthSys backend.
 
-## Setup
+### Local Backend
+
+```text
+http://localhost:8001
+```
+
+### Production Backend
+
+```text
+[https://api.kivanasafaris.com](https://api.kivanasafaris.com)
+```
+
+The backend uses Firebase Authentication, Firestore, PostgreSQL, Redis, Brevo email, and Africa’s Talking SMS services.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18 or later
+- npm 9 or later
+- Access to the AuthSys backend
+- Valid backend environment configuration
+
+### Installation
+
+From the `authsys-frontend/` directory:
 
 ```bash
 npm install
-cp .enwv.local.example .enwv.local   # or use .enwv.local already provided
+```
+
+### Environment Setup
+
+Create a `.env.local` file:
+
+```bash
+cp .env.local.example .env.local
+```
+
+For Vite-based configuration:
+
+```env
+VITE_API_BASE_URL=http://localhost:8001
+```
+
+For Next.js public environment configuration:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8001
+```
+
+Use only the variable name already used by the project’s API client. Do not create duplicate environment variables.
+
+### Run Locally
+
+```bash
 npm run dev
 ```
 
-Open http://localhost:3000
+Open:
 
-## Pages
-
-### Auth (public)
-| Route | Maps to |
-|---|---|
-| `/login` | `AuthController.login` + `GoogleAuthController` |
-| `/register` | `AuthController.registerUser` → PENDING_APPROVAL |
-| `/registration-submitted` | Post-registration confirmation |
-| `/pending-approval` | Shown when status = PENDING_APPROVAL |
-| `/forgot-password` | `PasswordResetController.forgotPassword` |
-| `/reset-password?token=` | `PasswordResetController.resetPassword` |
-| `/login/verify` | `OtpController` (login 2FA) |
-| `/setup/password` | `FirstTimeSetupController` Step 1 |
-| `/setup/verify` | `FirstTimeSetupController` Step 2 |
-| `/setup/complete` | `FirstTimeSetupController` Step 3 |
-
-### Dashboard (authenticated)
-| Route | Maps to |
-|---|---|
-| `/dashboard` | Overview with live stats |
-| `/tours` | `TourController` — full CRUD |
-| `/profile` | `UserProfileController` + `PasswordManagementController` |
-| `/settings` | System info from startup log |
-| `/admin/pending` | `AdminController.getPendingUsers` → approve/reject |
-| `/admin/users` | `AdminController.getAllUsers` → lock/unlock |
-| `/admin/roles` | `AdminRolePermissionController` — 6 roles, 27 permissions |
-| `/admin/audit` | `AuditLogController.getAuditLogs` |
-
-## Auth flow (First-time login — 3 steps)
-
-```
-POST /auth/login → { status: "FIRST_TIME_LOGIN", tempToken }
-  ↓
-POST /auth/first-time/change-password (X-Temp-Token) → OtpResult { sent, otp via SMS }
-  ↓
-POST /auth/first-time/verify-otp (X-Temp-Token) → OtpVerificationResult { verificationToken }
-  ↓
-POST /auth/first-time/complete { verificationToken } → TokenPair
+```text
+http://localhost:3000
 ```
 
-## Security notes
+### Build for Production
 
-- Access tokens live in `sessionStorage` (cleared on tab close)
-- A lightweight non-sensitive `authsys-has-session=1` cookie is set for Next.js middleware route gating only
-- The API itself enforces auth — the middleware is UX-only
-- Forgot-password always returns success (prevents email enumeration)
-- OTP digit input auto-submits on 6th digit — no submit button tap required
+```bash
+npm run build
+```
 
-## Next SaaS modules (your roadmap)
+### Start Production Build
 
-Per the architecture discussion, add these next to the Spring Boot monolith:
+```bash
+npm run start
+```
 
-1. **Organizations** — `organization_id UUID` on every business table
-2. **Customers** — CRM (passport, preferences, booking history)
-3. **Bookings** — Draft → Pending → Confirmed → Paid → Completed
-4. **Payments** — M-Pesa, card, cash (Africa's Talking already wired for SMS notifications)
-5. **Fleet** — Vehicles, drivers, maintenance
-6. **Guides** — Availability, certifications, ratings
+## Pages and Routes
 
-Each adds a new sidebar nav item and follows the same `lib/xxx-api.ts` → page pattern.
+### Public Authentication Routes
+
+| Route | Purpose |
+|---|---|
+| `/login` | User login |
+| `/register` | New user registration |
+| `/registration-submitted` | Registration confirmation |
+| `/pending-approval` | Account pending administrator approval |
+| `/forgot-password` | Password-reset request |
+| `/reset-password` | Password reset using a secure token |
+| `/login/verify` | Login OTP verification |
+| `/setup/password` | First-time password setup |
+| `/setup/verify` | First-time OTP verification |
+| `/setup/complete` | First-time setup completion |
+
+### Authenticated Dashboard Routes
+
+| Route | Purpose |
+|---|---|
+| `/dashboard` | Operational overview and live statistics |
+| `/tours` | Tour management |
+| `/profile` | User profile management |
+| `/settings` | System settings |
+| `/admin/pending` | Approve or reject pending users |
+| `/admin/users` | Manage user accounts |
+| `/admin/roles` | Manage roles and permissions |
+| `/admin/audit` | View audit logs |
+
+## Authentication Flow
+
+The first-time login flow follows these steps:
+
+```text
+1. User submits login credentials
+2. Backend returns FIRST_TIME_LOGIN status and a temporary token
+3. User sets a new password
+4. Backend sends an OTP through SMS
+5. User verifies the OTP
+6. Backend returns a verification token
+7. User completes first-time setup
+8. Backend issues the final authentication token pair
+```
+
+## Security Model
+
+- Access tokens are stored in `sessionStorage` and cleared when the browser tab is closed.
+- A non-sensitive `authsys-has-session=1` cookie supports client-side route gating.
+- Next.js middleware is used for user experience and route protection only.
+- The backend remains the source of truth for authentication and authorisation.
+- Password-reset endpoints return a generic success response to reduce email-enumeration risk.
+- OTP input automatically submits after the sixth digit is entered.
+
+## Deployment
+
+This application is deployed to Vercel.
+
+### Vercel Project Settings
+
+| Setting | Value |
+|---|---|
+| Repository | `94tec/Damuchi_tours` |
+| Root Directory | `authsys-frontend` |
+| Framework | Next.js |
+| Build command | `npm run build` |
+| Output directory | Vercel default for Next.js |
+| Production domain | `https://auth.kivanasafaris.com` |
+
+### Production Environment Variable
+
+```env
+NEXT_PUBLIC_API_URL=[https://api.kivanasafaris.com](https://api.kivanasafaris.com)
+```
+
+Or, if the project uses Vite-style variables:
+
+```env
+VITE_API_BASE_URL=[https://api.kivanasafaris.com](https://api.kivanasafaris.com)
+```
+
+After updating environment variables, redeploy the project so the new value is included in the production build.
+
+## Development Guidelines
+
+- Keep API calls in dedicated service modules.
+- Use TypeScript types for API requests and responses.
+- Validate all user input with Zod.
+- Keep authentication logic centralised.
+- Do not store sensitive information in localStorage.
+- Do not bypass backend authorisation checks in the frontend.
+- Use reusable UI components from `shadcn/ui` where possible.
+- Follow the existing folder and naming conventions.
+
+## Troubleshooting
+
+### API Requests Fail
+
+Check that:
+
+- The backend is running.
+- The API base URL is correct.
+- CORS allows the frontend origin.
+- Required authentication headers are being sent.
+- The backend is reachable from the browser.
+
+### Login Does Not Proceed
+
+Check that:
+
+- The user account is approved.
+- The user is not locked.
+- OTP delivery is configured.
+- Firebase Authentication is available.
+- The backend JWT configuration is valid.
+
+### Environment Variables Do Not Apply
+
+Restart the development server after changing `.env.local`. For production, redeploy the Vercel project after changing environment variables.
+
+## Support
+
+For technical support or deployment assistance, contact:
+
+**Fixtone Kaloki**  
+Software Developer & ICT Specialist  
+Email: [your email address]  
+Phone: [your phone number]
