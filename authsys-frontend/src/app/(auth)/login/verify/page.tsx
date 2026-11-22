@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { OtpField } from "@/components/ui/otp-field";
 import { Button } from "@/components/ui/button";
 import { authApi } from "@/lib/auth-api";
+import { getDefaultDestination, navigateToDestination } from "@/lib/auth/destination";
 import { useAuthStore } from "@/store/auth-store";
 import type { ApiError } from "@/types/auth";
 
@@ -87,7 +88,9 @@ export default function LoginVerifyPage() {
       setTokens(tokenPair);
 
       toast.success("Welcome back");
-      router.push("/dashboard");
+      await navigateToDestination(
+          getDefaultDestination(useAuthStore.getState().user, tokenPair.accessToken)
+      );
     } catch (err) {
       const apiError = err as ApiError;
 

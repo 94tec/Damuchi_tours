@@ -10,12 +10,14 @@ import {
 } from "lucide-react";
 
 import { authApi } from "@/lib/auth-api";
+import { getLogoutTarget } from "@/lib/auth/destination";
 import { useAuthStore } from "@/store/auth-store";
 
 import {
     isSameOriginRedirect,
     isTrustedCrossOriginRedirect,
 } from "@/lib/auth-redirect-utils";
+
 
 const STATUS_MESSAGES = [
     "Signing you out...",
@@ -36,52 +38,20 @@ export default function LogoutForm() {
         mountedRef.current = true;
 
         const runLogout = async () => {
-            try {
-                setStatus(STATUS_MESSAGES[0]);
+            const { user, accessToken } = useAuthStore.getState();
+            const fallback = getLogoutTarget(user, accessToken);
 
-                await authApi.logout();
+            try { await authApi.logout(); } catch {}
+            try { useAuthStore.getState().clearSession(); } catch {}
 
-                if (!mountedRef.current) return;
+            const rawNext = searchParams.get("next");
+            const target =
+                rawNext && (isSameOriginRedirect(rawNext) || isTrustedCrossOriginRedirect(rawNext))
+                    ? rawNext
+                    : fallback;
 
-                setStatus(STATUS_MESSAGES[1]);
-            } catch {
-                // Never block logout UI on API failure
-            }
-
-            try {
-                useAuthStore
-                    .getState()
-                    .clearSession();
-            } catch {
-                // Ignore local cleanup failures
-            }
-
-            if (!mountedRef.current) return;
-
-            setStatus(STATUS_MESSAGES[2]);
-
-            const rawNext =
-                searchParams.get("next") || "/";
-
-            let redirectTarget = "/";
-
-            if (
-                isSameOriginRedirect(rawNext)
-            ) {
-                redirectTarget = rawNext;
-            } else if (
-                isTrustedCrossOriginRedirect(rawNext)
-            ) {
-                redirectTarget = rawNext;
-            }
-
-            setTimeout(() => {
-                window.location.replace(
-                    redirectTarget,
-                );
-            }, 700);
+            setTimeout(() => window.location.replace(target), 700);
         };
-
         void runLogout();
 
         return () => {

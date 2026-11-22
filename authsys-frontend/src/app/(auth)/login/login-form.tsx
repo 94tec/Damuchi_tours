@@ -37,113 +37,13 @@ import {
   type LoginFormValues,
 } from "@/lib/validations/auth";
 import { authApi } from "@/lib/auth-api";
-import { ssoApi } from "@/lib/sso-api";
-import { TOUR_PORTAL_URL } from "@/lib/portals";
 import { useAuthStore } from "@/store/auth-store";
-import { getLoginErrorMessage, GENERIC_LOGIN_ERROR } from "@/lib/auth/login-error";
+import { getLoginErrorMessage } from "@/lib/auth/login-error";
+
 import {
-  buildHandoffUrl,
-  isSameOriginRedirect,
-  isTrustedCrossOriginRedirect,
-} from "@/lib/auth-redirect-utils";
-
-/* =========================================================================
-   Existing navigation helpers
-========================================================================= */
-
-function safeNavigate(path: string) {
-  requestAnimationFrame(() => {
-    setTimeout(() => {
-      window.location.href = path;
-    }, 50);
-  });
-}
-
-interface Destination {
-  crossOrigin: boolean;
-  path: string;
-  portalUrl?: string;
-}
-
-function getDefaultDestination(user: any): Destination {
-  if (!user) {
-    return {
-      crossOrigin: false,
-      path: "/dashboard",
-    };
-  }
-
-  const roles: string[] = [];
-
-  if (typeof user.role === "string") {
-    roles.push(user.role);
-  }
-
-  if (Array.isArray(user.roles)) {
-    for (const role of user.roles) {
-      if (typeof role === "string") {
-        roles.push(role);
-      } else if (role?.name) {
-        roles.push(role.name);
-      } else if (role?.authority) {
-        roles.push(role.authority);
-      }
-    }
-  }
-
-  if (Array.isArray(user.authorities)) {
-    for (const authority of user.authorities) {
-      if (typeof authority === "string") {
-        roles.push(authority);
-      } else if (authority?.authority) {
-        roles.push(authority.authority);
-      }
-    }
-  }
-
-  const normalizedRoles = roles.map((role) =>
-    role.replace(/^ROLE_/, "").toUpperCase()
-  );
-
-  if (normalizedRoles.includes("USER")) {
-    return {
-      crossOrigin: true,
-      path: "/",
-      portalUrl: TOUR_PORTAL_URL,
-    };
-  }
-
-  return {
-    crossOrigin: false,
-    path: "/dashboard",
-  };
-}
-
-async function navigateToDestination(destination: Destination) {
-  if (!destination.crossOrigin) {
-    safeNavigate(destination.path);
-    return;
-  }
-
-  try {
-    const { code } = await ssoApi.createHandoffCode();
-
-    const url = new URL(
-      `${destination.portalUrl}/auth-callback`
-);
-
-url.searchParams.set("code", code);
-url.searchParams.set("next", destination.path);
-
-window.location.href = url.toString();
-} catch {
-  toast.error(
-      "Couldn't establish a secure session there — please sign in on that portal."
-  );
-
-  window.location.href = `${destination.portalUrl}${destination.path}`;
-}
-}
+  getDefaultDestination, navigateToDestination, handoffToTrusted,
+  safeNavigate, isSameOriginRedirect, isTrustedCrossOriginRedirect,
+} from "@/lib/auth/destination";
 
 /* =========================================================================
    Login page
@@ -179,16 +79,16 @@ export default function LoginForm() {
   const [hasHydrated, setHasHydrated] = useState(
       () => useAuthStore.persist.hasHydrated()
   );
-  const params = useSearchParams();
   const shown = useRef(false);
 
   useEffect(() => {
     if (shown.current) return;
-    const reason = params.get("reason");
+    shown.current = true;
+    const reason = searchParams.get("reason");
     if (reason === "idle") toast.info("You were signed out due to inactivity. Please sign in again.");
     if (reason === "expired") toast.info("Your session expired. Please sign in again.");
-    shown.current = true;
-  }, [params]);
+    if (reason === "forbidden") toast.error("That account doesn't have access to that area.");
+  }, [searchParams]);
 
   /* -----------------------------------------------------------------------
      Hydration
@@ -210,22 +110,12 @@ export default function LoginForm() {
   /* -----------------------------------------------------------------------
      Already authenticated
   ----------------------------------------------------------------------- */
-
   useEffect(() => {
     if (!hasHydrated) return;
-
     if (isAuthenticated && accessToken) {
-      const destination =
-          getDefaultDestination(authenticatedUser);
-
-      navigateToDestination(destination);
+      void navigateToDestination(getDefaultDestination(authenticatedUser, accessToken));
     }
-  }, [
-    hasHydrated,
-    isAuthenticated,
-    accessToken,
-    authenticatedUser,
-  ]);
+  }, [hasHydrated, isAuthenticated, accessToken, authenticatedUser]);
 
   /* -----------------------------------------------------------------------
      Form
@@ -302,28 +192,14 @@ export default function LoginForm() {
             safeNavigate(redirectParam);
             return;
           }
-
-          if (
-              isTrustedCrossOriginRedirect(
-                  redirectParam
-              )
-          ) {
-            const handoffUrl = buildHandoffUrl(
-                redirectParam,
-                res.accessToken,
-                res.refreshToken ?? ""
-            );
-
-            window.location.href = handoffUrl;
+          if (isTrustedCrossOriginRedirect(redirectParam)) {
+            await handoffToTrusted(redirectParam);
             return;
           }
         }
 
         /* Role based destination */
-        const destination =
-            getDefaultDestination(res.user);
-
-        await navigateToDestination(destination);
+        await navigateToDestination(getDefaultDestination(res.user, res.accessToken));
         return;
       }
 

@@ -1,12 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-
 import { useVisitorContext } from "@/components/landing/visitor-provider";
-import { useAuthStore } from "@/store/auth-store";
-import { authApi } from "@/lib/auth-api";
+import { useLogout} from "@/lib/auth/use-logout";
 
 import { NAV_LINKS } from "@/lib/nav-links";
 import { MobileNav } from "./mobile";
@@ -19,19 +15,11 @@ import { AuthActions } from "@/components/navigation/auth-actions";
 import { MobileTrigger } from "@/components/navigation/mobile-trigger";
 
 export function Navbar() {
-    const router = useRouter();
 
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const {logout, isLoggingOut} = useLogout();
 
     const { status, user } = useVisitorContext();
-
-    const clearSession = useAuthStore(
-        (state) => state.clearSession
-    );
-
-    const AUTH_FRONTEND_URL = process.env.NEXT_PUBLIC_AUTH_SYSTEM_URL ?? "http://localhost:3000";
-    const APP_URL = process.env.NEXT_PUBLIC_TOUR_PORTAL_URL ?? "http://localhost:3001";
 
     const firstName =
         user?.displayName ||
@@ -40,28 +28,6 @@ export function Navbar() {
 
     const initials =
         firstName.charAt(0).toUpperCase();
-
-    async function handleLogout() {
-        if (isLoggingOut) return;
-
-        try {
-            setIsLoggingOut(true);
-
-            await authApi.logout();
-        } catch {
-        } finally {
-            clearSession();
-
-            const logoutUrl = new URL(`${AUTH_FRONTEND_URL}/logout`);
-            logoutUrl.searchParams.set("next", `${APP_URL}/`);
-            window.location.href = logoutUrl.toString();
-            // isLoggingOut intentionally left true — we're navigating away
-
-            //toast.success("You have successfully signed out");
-
-            setIsLoggingOut(false);
-        }
-    }
 
     return (
         <header className="sticky top-0 z-50">
@@ -90,7 +56,7 @@ export function Navbar() {
                                     firstName={firstName}
                                     email={user?.email}
                                     initials={initials}
-                                    onLogout={handleLogout}
+                                    onLogout={logout}
                                 />
                             ) : (
                                 <AuthActions />
@@ -112,7 +78,7 @@ export function Navbar() {
                 navLinks={NAV_LINKS}
                 visitorStatus={status}
                 firstName={firstName}
-                onLogout={handleLogout}
+                onLogout={logout}
             />
         </header>
     );

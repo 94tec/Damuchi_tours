@@ -12,20 +12,14 @@
  *     which is never sent to the server in HTTP requests.
  */
 
-const TRUSTED_REDIRECT_ORIGINS: string[] = [
-  "http://localhost:3001",
-  // Add production origins here when deploying:
-  // "https://ops.damuchisafaris.co.ke",
-];
-
-// TODO: confirm these match your actual Permission enum in PermissionService —
-// placeholders based on your Tour/Availability/Booking module scaffolding.
-const STAFF_PERMISSIONS = ["MANAGE_TOURS", "MANAGE_BOOKINGS", "MANAGE_AVAILABILITY"];
-const SYSTEM_ADMIN_PERMISSIONS = ["MANAGE_USERS", "MANAGE_ROLES", "MANAGE_SECURITY"];
-
-const OPS_BASE_URL = process.env.NEXT_PUBLIC_TOUR_PORTAL_URL ?? "http://localhost:3001";
-
+const TRUSTED_REDIRECT_ORIGINS = [process.env.NEXT_PUBLIC_TOUR_PORTAL_URL ?? "http://localhost:3001"];
 export type Destination = { crossOrigin: boolean; url: string };
+
+export const AUTH_FRONTEND_URL =
+    process.env.NEXT_PUBLIC_AUTH_FRONTEND_URL ?? "http://localhost:3000";
+export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+
+const STAFF_ROLES = ["SUPER_ADMIN", "ADMIN", "MANAGER", "OPERATOR"];
 
 /**
  * Returns true if the given URL's origin is in the trusted list.
@@ -59,47 +53,25 @@ export function isSameOriginRedirect(redirectUrl: string): boolean {
   );
 }
 
-/**
- * Builds the cross-origin handoff URL by appending tokens as a fragment.
- *
- * @param redirectUrl  The ?redirect= param value from the login page URL
- * @param accessToken  The newly issued access token
- * @param refreshToken The newly issued refresh token
- * @returns The full handoff URL with #token=...&refresh=... fragment
- */
-export function buildHandoffUrl(
-  redirectUrl: string,
-  accessToken: string,
-  refreshToken: string
-): string {
-  const url = new URL(redirectUrl);
-  url.hash  = `token=${encodeURIComponent(accessToken)}&refresh=${encodeURIComponent(refreshToken)}`;
+export function isStaffUser(roles?: readonly string[] | null): boolean {
+  return (roles ?? []).some((r) => STAFF_ROLES.includes(r.replace(/^ROLE_/, "").toUpperCase()));
+}
+
+/** Authsys login, returning to `returnTo` (full URL) after sign-in. */
+export function buildLoginUrl(returnTo?: string, reason?: string): string {
+  const url = new URL(`${AUTH_FRONTEND_URL}/login`);
+  if (returnTo) url.searchParams.set("redirect", returnTo);
+  if (reason) url.searchParams.set("reason", reason);
   return url.toString();
 }
 
 /**
- * Decides where a freshly-authenticated user should land.
- * Called right after login, before building the redirect/handoff URL.
+ * Staff -> authsys login. Customers -> this app's landing page.
+ * Both go through authsys /logout first, so its own tab session is cleared too.
+ * `next` must pass authsys's checks: a relative path, or a trusted origin.
  */
-// ── Post-login destination resolution ─────────────────────────────
-// Keep STAFF_/SYSTEM_ADMIN_PERMISSIONS in sync with the actual
-// Permission seed data (58 permissions / 6 roles) in PermissionService.
-
-/**
- * Decides where a freshly-authenticated user should land, given their
- * permissions from LoginResponse.user.permissions.
- *
- * - System admins stay on authsys-frontend (/dashboard, /admin/*)
- * - Staff go to damuchi-ops-frontend's staff console
- * - Everyone else (customers/guests) goes to the ops public landing
- */
-export function resolveDestination(permissions: string[] = []): Destination {
-  const perms = new Set(permissions);
-  const isSystemAdmin = SYSTEM_ADMIN_PERMISSIONS.some((p) => perms.has(p));
-  const isStaff = STAFF_PERMISSIONS.some((p) => perms.has(p));
-
-  if (isSystemAdmin) return { crossOrigin: false, url: "/dashboard" };
-  if (isStaff) return { crossOrigin: true, url: `${OPS_BASE_URL}/staff/dashboard` };
-  return { crossOrigin: true, url: `${OPS_BASE_URL}/` };
+export function buildLogoutUrl(staff: boolean): string {
+  const url = new URL(`${AUTH_FRONTEND_URL}/logout`);
+  url.searchParams.set("next", staff ? "/login" : `${APP_URL}/`);
+  return url.toString();
 }
-

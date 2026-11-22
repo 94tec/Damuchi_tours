@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { LogOut, User as UserIcon, Settings, Bell } from "lucide-react";
-import { toast } from "sonner";
 
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -10,40 +9,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { authApi } from "@/lib/auth-api";
+import { useLogout} from "@/lib/auth/use-logout";
 import { useAuthStore } from "@/store/auth-store";
-import {useState} from "react";
 
 export function Topbar() {
   const router = useRouter();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { user, clearSession, isAdmin } = useAuthStore();
+  const { logout, isLoggingOut } = useLogout();
+  const { user, isAdmin } = useAuthStore();
   const admin = isAdmin();
 
-  const AUTH_FRONTEND_URL = process.env.NEXT_PUBLIC_AUTH_SYSTEM_URL ?? "http://localhost:3000";
 
   const initials = user
     ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase()
     : "?";
 
-  async function handleLogout() {
-    if (isLoggingOut) return;
-    setIsLoggingOut(true);
 
-    try {
-      await authApi.logout();
-    } catch {
-      // ignore
-    }
-
-    clearSession();
-    toast.success("Signed out"); // show feedback before redirect
-
-    const logoutUrl = new URL(`${AUTH_FRONTEND_URL}/logout`);
-    logoutUrl.searchParams.set("next", `${AUTH_FRONTEND_URL}/`);
-    window.location.href = logoutUrl.toString();
-    // No need to reset isLoggingOut – page will unload
-  }
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-background px-5 lg:px-8">
@@ -100,7 +80,8 @@ export function Topbar() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onSelect={handleLogout}
+              onSelect={logout}
+              disabled={isLoggingOut}
               className="text-destructive focus:bg-destructive/10 focus:text-destructive"
             >
               <LogOut className="h-4 w-4" />

@@ -7,6 +7,8 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { useAuthStore } from "@/store/auth-store";
 
+import { buildLoginUrl, isStaffUser } from "@/lib/auth-redirect-utils"
+
 // Maps admin section prefixes to the permission required to view them.
 // database/, disaster-recovery/, security/ already self-gate with an inline
 // isSuperAdmin() check inside their own page components — listed here too
@@ -55,47 +57,44 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (!hasHydrated) return;
 
     if (!isAuthenticated || !accessToken) {
-      // Don't trust the very first unauthenticated reading right after
-      // hydration flips true — give the store one more tick to actually
-      // apply the rehydrated state before deciding to redirect.
       const timeout = setTimeout(() => {
-        const stillUnauthed =
-            !useAuthStore.getState().isAuthenticated || !useAuthStore.getState().accessToken;
-        if (stillUnauthed && !redirected.current) {
+        const s = useAuthStore.getState();
+        if ((!s.isAuthenticated || !s.accessToken) && !redirected.current) {
           redirected.current = true;
-          router.replace("/login");
+          window.location.href = buildLoginUrl(window.location.href);
         }
       }, 0);
       return () => clearTimeout(timeout);
+    }
+
+    if (!user) return; // profile still loading
+
+    // Logged-in customers don't belong in the staff console.
+    // Don't clear their session: they're valid users on the public site.
+    if (!isStaffUser(user.roles)) {
+      if (!redirected.current) {
+        redirected.current = true;
+        toast.error("That area is for staff only.");
+        router.replace("/");
+      }
+      return;
     }
 
     if (
         typeof document !== "undefined" &&
         !document.cookie.includes("authsys-has-session")
     ) {
-      document.cookie = [
-        "authsys-has-session=1",
-        "path=/",
-        "SameSite=Strict",
-        "Max-Age=86400",
-      ].join("; ");
+      document.cookie = ["authsys-has-session=1", "path=/", "SameSite=Strict", "Max-Age=86400"].join("; ");
     }
 
-    // Per-section admin permission gate. Runs after the session checks
-    // above so we never redirect an authenticated-but-underprivileged
-    // user through the unauthenticated /login path by mistake.
-    // SUPER_ADMIN bypasses per-section permission strings entirely, since
-    // the backend's effective-permissions resolution isn't yet wired into
-    // the JWT/user object for this role (permissions currently arrives as
-    // an empty array for SUPER_ADMIN accounts).
     const required = permissionForPath(pathname);
-    const roles = user?.roles ?? [];
-    const perms = user?.permissions ?? [];
+    const roles = user.roles ?? [];
+    const perms = user.permissions ?? [];
     const hasAccess = !required || roles.includes("SUPER_ADMIN") || perms.includes(required);
 
     if (!hasAccess) {
       toast.error("You don't have access to that section.");
-      router.replace("/dashboard");
+      router.replace(pathname === "/dashboard" ? "/" : "/dashboard"); // avoid a loop
     }
   }, [hasHydrated, isAuthenticated, accessToken, user, pathname, router]);
 
