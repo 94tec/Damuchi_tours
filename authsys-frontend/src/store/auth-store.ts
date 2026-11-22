@@ -2,13 +2,6 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type {Role, TokenPair, User, UserProfile} from "@/types/auth";
 
-// ─────────────────────────────────────────────────────────────────
-// Cookie helpers
-// Using Max-Age=86400 (24h) makes the cookie persist across tabs
-// and is immediately visible to the server on the next navigation,
-// whereas a session cookie (no Max-Age) can sometimes not be sent
-// when the navigation happens in the same rAF frame as the write.
-// ─────────────────────────────────────────────────────────────────
 function writeSessionCookie() {
     if (typeof document === "undefined") return;
     document.cookie = [

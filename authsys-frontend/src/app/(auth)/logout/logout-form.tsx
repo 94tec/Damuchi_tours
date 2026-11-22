@@ -32,14 +32,15 @@ export default function LogoutForm() {
         STATUS_MESSAGES[0],
     );
 
-    const mountedRef = useRef(true);
+    const ranRef = useRef(false);
 
     useEffect(() => {
-        mountedRef.current = true;
+        if (ranRef.current) return;
+        ranRef.current = true;
 
         const runLogout = async () => {
             const { user, accessToken } = useAuthStore.getState();
-            const fallback = getLogoutTarget(user, accessToken);
+            const fallback = getLogoutTarget(user, accessToken); // before clearing
 
             try { await authApi.logout(); } catch {}
             try { useAuthStore.getState().clearSession(); } catch {}
@@ -52,11 +53,8 @@ export default function LogoutForm() {
 
             setTimeout(() => window.location.replace(target), 700);
         };
-        void runLogout();
 
-        return () => {
-            mountedRef.current = false;
-        };
+        void runLogout();
     }, [searchParams]);
 
     return (

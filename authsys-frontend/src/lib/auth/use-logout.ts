@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { authApi } from "@/lib/auth-api";
 import { useAuthStore } from "@/store/auth-store";
-import { buildLogoutUrl, isStaffUser } from "@/lib/auth-redirect-utils";
+import { getLogoutTarget } from "@/lib/auth/destination";
 
 export function useLogout() {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -13,8 +13,8 @@ export function useLogout() {
         setIsLoggingOut(true);
 
         // Decide the target BEFORE the session is cleared.
-        const staff = isStaffUser(useAuthStore.getState().user?.roles);
-        const target = buildLogoutUrl(staff);
+        const { user, accessToken } = useAuthStore.getState();
+        const target = getLogoutTarget(user, accessToken); // staff -> "/login", customers -> portal "/"
 
         try {
             await authApi.logout(); // revokes the refresh token server-side
@@ -23,7 +23,7 @@ export function useLogout() {
         }
 
         useAuthStore.getState().clearSession();
-        window.location.href = target; // leave isLoggingOut true: the page unloads
+        window.location.replace(target); // leave isLoggingOut true: the page unloads
     }, [isLoggingOut]);
 
     return { logout, isLoggingOut };
