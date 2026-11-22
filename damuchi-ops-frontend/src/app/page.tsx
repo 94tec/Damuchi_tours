@@ -2,7 +2,6 @@ import { Navbar }              from "@/components/layout/navbar";
 import { Footer }              from "@/components/layout/footer";
 import { WelcomeBackBand }     from "@/components/landing/welcome-back-band";
 import { Hero }                from "@/components/landing/hero/hero";
-import { TrustStats }          from "@/components/landing/trust-stats";
 import { TourGrid }            from "@/components/tours/tour-grid";
 import { DestinationsStrip }   from "@/components/landing/destinations-strip";
 import { HowItWorks }          from "@/components/landing/how-it-works";
@@ -61,8 +60,6 @@ export default function PublicLandingPage() {
             <main className="flex-1">
                 <Hero />
                 <SafariFinder />
-                <TrustStats />
-
                 <div id="tours">        <TourGrid /></div>
                 <div id="destinations"> <DestinationsStrip /></div>
                 <div id="how-it-works"> <HowItWorks /></div>
