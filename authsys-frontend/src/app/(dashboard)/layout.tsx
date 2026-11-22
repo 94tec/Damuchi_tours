@@ -6,20 +6,13 @@ import { toast } from "sonner";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { useAuthStore } from "@/store/auth-store";
+import {
+  getRoles,
+  getDefaultDestination,
+  navigateToDestination,
+} from "@/lib/auth/destination";
 
-import { buildLoginUrl, isStaffUser } from "@/lib/auth-redirect-utils"
-
-// Maps admin section prefixes to the permission required to view them.
-// database/, disaster-recovery/, security/ already self-gate with an inline
-// isSuperAdmin() check inside their own page components — listed here too
-// so the redirect happens at the layout level before the page even mounts,
-// instead of relying solely on each page remembering to check.
-//
-// SUPER_ADMIN bypasses this check entirely (see hasAccess below) — the
-// permission-string checks below only apply to non-SUPER_ADMIN roles.
-// TODO: confirm these permission strings against the real seed data in
-// PermissionYamlLoader/permissions.yml — placeholders based on naming
-// conventions seen elsewhere (MANAGE_USERS, MANAGE_ROLES, MANAGE_SECURITY).
+const ADMIN_ROLES = ["SUPER_ADMIN", "ADMIN"];
 const ROUTE_PERMISSIONS: Record<string, string> = {
   "/admin/users": "MANAGE_USERS",
   "/admin/pending": "MANAGE_USERS",
@@ -34,8 +27,7 @@ function permissionForPath(pathname: string): string | null {
   const match = Object.keys(ROUTE_PERMISSIONS).find(
       (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
   );
-  // @ts-ignore
-  return match ? ROUTE_PERMISSIONS[match] : null;
+  return match ? ROUTE_PERMISSIONS[match] ?? null : null;
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -45,7 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const accessToken = useAuthStore((s) => s.accessToken);
   const user = useAuthStore((s) => s.user);
   const redirected = useRef(false);
-  const [hasHydrated, setHasHydrated] = useState(useAuthStore.persist.hasHydrated());
+  const [hasHydrated, setHasHydrated] = useState(() => useAuthStore.persist.hasHydrated());
 
   useEffect(() => {
     const unsub = useAuthStore.persist.onFinishHydration(() => setHasHydrated(true));
@@ -53,52 +45,55 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return unsub;
   }, []);
 
-  useEffect(() => {
-    if (!hasHydrated) return;
+  // user can be null (e.g. after OTP login), so fall back to the JWT roles.
+  const roles = getRoles(user, accessToken);
+  const isAdminUser = roles.some((r) => ADMIN_ROLES.includes(r));
+  const signedIn = hasHydrated && isAuthenticated && !!accessToken;
 
+  useEffect(() => {
+    if (!hasHydrated || redirected.current) return;
+
+    // 1. Not signed in -> login (relative path, so the login page accepts it).
     if (!isAuthenticated || !accessToken) {
       const timeout = setTimeout(() => {
         const s = useAuthStore.getState();
         if ((!s.isAuthenticated || !s.accessToken) && !redirected.current) {
           redirected.current = true;
-          window.location.href = buildLoginUrl(window.location.href);
+          router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
         }
       }, 0);
       return () => clearTimeout(timeout);
     }
 
-    if (!user) return; // profile still loading
-
-    // Logged-in customers don't belong in the staff console.
-    // Don't clear their session: they're valid users on the public site.
-    if (!isStaffUser(user.roles)) {
-      if (!redirected.current) {
-        redirected.current = true;
-        toast.error("That area is for staff only.");
-        router.replace("/");
-      }
+    // 2. Signed in but not an admin: send them to where they belong
+    //    (manager/operator -> portal dashboard, customer -> portal landing).
+    //    Keep their session; they are valid users elsewhere.
+    if (!isAdminUser) {
+      redirected.current = true;
+      toast.error("That area is for administrators only.");
+      void navigateToDestination(getDefaultDestination(user, accessToken));
       return;
     }
 
-    if (
-        typeof document !== "undefined" &&
-        !document.cookie.includes("authsys-has-session")
-    ) {
+    if (typeof document !== "undefined" && !document.cookie.includes("authsys-has-session")) {
       document.cookie = ["authsys-has-session=1", "path=/", "SameSite=Strict", "Max-Age=86400"].join("; ");
     }
 
+    // 3. Per-section permission gate. SUPER_ADMIN bypasses it.
     const required = permissionForPath(pathname);
-    const roles = user.roles ?? [];
-    const perms = user.permissions ?? [];
-    const hasAccess = !required || roles.includes("SUPER_ADMIN") || perms.includes(required);
+    if (!required || roles.includes("SUPER_ADMIN")) return;
 
-    if (!hasAccess) {
+    // Permissions may still be loading: don't deny until the profile is there.
+    if (!user?.permissions) return;
+
+    if (!user.permissions.includes(required)) {
       toast.error("You don't have access to that section.");
-      router.replace(pathname === "/dashboard" ? "/" : "/dashboard"); // avoid a loop
+      router.replace("/dashboard");
     }
-  }, [hasHydrated, isAuthenticated, accessToken, user, pathname, router]);
+  }, [hasHydrated, isAuthenticated, accessToken, user, pathname, router, isAdminUser, roles]);
 
-  if (!hasHydrated || !isAuthenticated || !accessToken) {
+  // Render nothing until we know this is an admin who may be here.
+  if (!signedIn || !isAdminUser) {
     return (
         <div className="flex min-h-screen items-center justify-center bg-background">
           <div className="flex items-center gap-3 text-muted-foreground">
