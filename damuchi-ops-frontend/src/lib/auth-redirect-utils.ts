@@ -1,6 +1,6 @@
 export const AUTH_FRONTEND_URL =
-    process.env.NEXT_PUBLIC_AUTH_FRONTEND_URL ?? "http://localhost:3000";
-export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+    process.env.NEXT_PUBLIC_AUTH_FRONTEND_URL;
+export const APP_URL = process.env.NEXT_PUBLIC_APP_URL;
 
 const STAFF_ROLES = ["SUPER_ADMIN", "ADMIN", "MANAGER", "OPERATOR"];
 
