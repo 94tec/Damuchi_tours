@@ -4,6 +4,18 @@ export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001
 
 const STAFF_ROLES = ["SUPER_ADMIN", "ADMIN", "MANAGER", "OPERATOR"];
 
+/**
+ * Returns true if the redirect is a safe same-origin path
+ * (starts with / but not //).
+ */
+export function isSameOriginRedirect(redirectUrl: string): boolean {
+    return (
+        typeof redirectUrl === "string" &&
+        redirectUrl.startsWith("/") &&
+        !redirectUrl.startsWith("//")
+    );
+}
+
 export function isStaffUser(roles?: readonly string[] | null): boolean {
     return (roles ?? []).some((r) => STAFF_ROLES.includes(r.replace(/^ROLE_/, "").toUpperCase()));
 }

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 import { useAuthStore } from "@/store/auth-store";
-import { isSameOriginRedirect } from "@/lib/auth-redirect-utils";
+import { isSameOriginRedirect, buildLoginUrl } from "@/lib/auth-redirect-utils";
 import type { Role, TokenPair } from "@/types/index-types";
 
 const API_BASE_URL =
@@ -31,12 +31,42 @@ const VALID_ROLES: readonly Role[] = [
 ];
 
 function toRoles(value: unknown): Role[] {
-  if (!Array.isArray(value)) return [];
-
-  return value.filter((role): role is Role =>
-      VALID_ROLES.includes(role as Role)
-  );
+    if (!Array.isArray(value)) return [];
+    return value
+        .map((r: any) =>
+            String(typeof r === "string" ? r : r?.authority ?? r?.name ?? "")
+                .replace(/^ROLE_/, "")
+                .toUpperCase()
+        )
+        .filter((r): r is Role => VALID_ROLES.includes(r as Role));
 }
+/** Exact backend message when there is one, otherwise what actually happened. */
+function describeRedeemError(err: unknown): string {
+    if (!axios.isAxiosError(err)) return "Unexpected error. Please try signing in again.";
+
+    if (!err.response) {
+        return err.code === "ECONNABORTED"
+            ? "The server took too long to respond. Please try again."
+            : "We can't reach the server. Check your connection and try again.";
+    }
+
+    const { status, data } = err.response as {
+        status: number;
+        data?: { message?: string; error?: string };
+    };
+    const backend = (data?.message ?? data?.error)?.trim();
+
+    if (status >= 500) return backend ? `Server error: ${backend}` : "Something went wrong on our side. Please try again.";
+    if (backend) return backend; // e.g. "Code expired", "Code already used"
+    if (status === 400 || status === 401 || status === 404 || status === 410)
+        return "This sign-in link has expired or was already used.";
+    if (status === 403) return "This account isn't allowed to sign in here.";
+    if (status === 429) return "Too many attempts. Please wait a moment and try again.";
+    return `Sign-in failed (HTTP ${status}).`;
+}
+
+const withTimeout = <T,>(p: Promise<T>, ms: number) =>
+    Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
@@ -90,110 +120,80 @@ export default function AuthCallback() {
 
   const hasFiredRef = useRef(false);
 
-  useEffect(() => {
-    if (hasFiredRef.current) return;
+    useEffect(() => {
+        if (hasFiredRef.current) return;
+        hasFiredRef.current = true;
 
-    hasFiredRef.current = true;
+        const code = searchParams.get("code");
+        const rawNext = searchParams.get("next") || "/";
+        const next = isSameOriginRedirect(rawNext) ? rawNext : "/";
 
-    const code = searchParams.get("code");
+        // Single-use code: take it out of the URL and history straight away.
+        window.history.replaceState(null, "", "/auth-callback");
 
-    const rawNext = searchParams.get("next") || "/";
-    const next = isSameOriginRedirect(rawNext) ? rawNext : "/";
-
-    if (!code) {
-      router.replace("/login-required");
-      return;
-    }
-
-    const slowTimer = window.setTimeout(() => {
-      setSlow(true);
-    }, 4000);
-
-    const redeem = async () => {
-      try {
-        const { data } = await axios.post<TokenPair>(
-            `${API_BASE_URL}/auth/sso/redeem`,
-            { code },
-            {
-              timeout: 10_000,
-            }
-        );
-
-        useAuthStore.getState().setTokens({
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-        });
-
-        const claims = decodeJwtPayload(data.accessToken);
-
-        if (claims) {
-          useAuthStore.getState().setUser({
-            id:
-                (claims.userId as string) ??
-                (claims.sub as string) ??
-                "",
-            email: (claims.email as string) ?? "",
-            roles: toRoles(claims.roles),
-          });
+        if (!code) {
+            window.location.replace(buildLoginUrl());
+            return;
         }
 
-        /*
-         * Best-effort account enrichment.
-         *
-         * Authentication does not wait for this request. The JWT already gives
-         * us enough information to establish the local user session.
-         */
-        void import("@/lib/auth-api")
-            .then(({ authApi }) => authApi.getCurrentUser?.())
-            .then((fullUser) => {
-              if (fullUser) {
-                useAuthStore.getState().setUser(fullUser);
-              }
-            })
-            .catch((profileError) => {
-              console.warn(
-                  "Background profile fetch failed after SSO login:",
-                  profileError
-              );
-            });
+        const slowTimer = window.setTimeout(() => setSlow(true), 4000);
 
-        window.clearTimeout(slowTimer);
+        const redeem = async () => {
+            try {
+                const { data } = await axios.post<TokenPair>(
+                    `${API_BASE_URL}/auth/sso/redeem`,
+                    { code },
+                    { timeout: 10_000 }
+                );
 
-        setSlow(false);
-        setStage("success");
+                const store = useAuthStore.getState();
+                store.setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
 
-        window.setTimeout(() => {
-          router.replace(next);
-        }, 900);
-      } catch (err) {
-        console.error("SSO redeem failed:", err);
+                const claims = decodeJwtPayload(data.accessToken);
+                if (claims) {
+                    store.setUser({
+                        id: (claims.userId as string) ?? (claims.sub as string) ?? "",
+                        email: (claims.email as string) ?? "",
+                        roles: toRoles(claims.roles),
+                    });
+                }
 
-        const message = axios.isAxiosError(err)
-            ? (
-            err.response?.data as
-                | {
-              message?: string;
+                // Load the full profile (permissions) BEFORE navigating, or the guard
+                // will deny staff whose permissions aren't in the JWT. Bounded wait.
+                try {
+                    const { authApi } = await import("@/lib/auth-api");
+                    const fullUser = await withTimeout(Promise.resolve(authApi.getCurrentUser?.()), 4000);
+                    if (fullUser) {
+                        const current = useAuthStore.getState().user;
+                        // Keep JWT roles if the profile response doesn't include them.
+                        useAuthStore.getState().setUser({
+                            ...current,
+                            ...fullUser,
+                            roles: fullUser.roles?.length ? fullUser.roles : current?.roles,
+                        });
+                    }
+                } catch (profileError) {
+                    console.warn("Profile fetch failed after SSO login:", profileError);
+                }
+
+                window.clearTimeout(slowTimer);
+                setSlow(false);
+                setStage("success");
+                window.setTimeout(() => router.replace(next), 700);
+            } catch (err) {
+                console.error("SSO redeem failed:", err);
+                useAuthStore.getState().clearSession();
+                window.clearTimeout(slowTimer);
+                setSlow(false);
+                setError(describeRedeemError(err));
+                setStage("error");
             }
-                | undefined
-        )?.message ?? err.message
-            : "Unexpected error";
+        };
 
-        window.clearTimeout(slowTimer);
-
-        setSlow(false);
-        setStage("error");
-        setError(
-            `This sign-in link may have expired or already been used. ${message}`
-        );
-      }
-    };
-
-    void redeem();
-
-    return () => {
-      window.clearTimeout(slowTimer);
-    };
-  }, [router, searchParams]);
+        void redeem();
+        // No cleanup: the ref guard makes the effect run once, and a cleanup that
+        // cleared the timer would break the "taking longer" notice under StrictMode.
+    }, [router, searchParams]);
 
   return (
       <main className="relative isolate flex min-h-screen overflow-hidden bg-[#070709] text-white">
