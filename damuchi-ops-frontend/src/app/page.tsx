@@ -1,6 +1,5 @@
-import { Navbar }        from "@/components/layout/navbar";
-import { Footer }        from "@/components/layout/footer";
-import { VisitorProvider }     from "@/components/landing/visitor-provider";
+import { Navbar }              from "@/components/layout/navbar";
+import { Footer }              from "@/components/layout/footer";
 import { WelcomeBackBand }     from "@/components/landing/welcome-back-band";
 import { Hero }                from "@/components/landing/hero/hero";
 import { TrustStats }          from "@/components/landing/trust-stats";
@@ -10,11 +9,22 @@ import { HowItWorks }          from "@/components/landing/how-it-works";
 import { Testimonials }        from "@/components/landing/testimonials";
 import { CtaBandGate }         from "@/components/landing/cta-band-gate";
 import { FloatingEnquiryCta }  from "@/components/landing/floating-enquiry-cta";
+// new
+import { ScrollProgress }      from "@/components/landing/scroll-progress";
+import { SectionNav }          from "@/components/landing/section-nav";
+import { SafariFinder }        from "@/components/landing/safari-finder";
+import { FaqSection }          from "@/components/landing/faq-section";
+import { FloatingActions }     from "@/components/landing/floating-actions";
+import { StructuredData }      from "@/components/landing/structured-data";
 import type { Metadata }       from "next";
 
+const SITE_URL = process.env.NEXT_PUBLIC_TOUR_PORTAL_URL;
+
 export const metadata: Metadata = {
-    title:       "Kivana Trails & Safaris | East Africa's tours, real local guides",
+    // `absolute` stops the layout's "%s | Kivana…" template from repeating the brand name.
+    title:       { absolute: "Kivana Trails & Safaris | East Africa's tours, real local guides" },
     description: "Safaris across Kenya, Tanzania, Uganda & Rwanda — beach escapes, mountain treks, gorilla encounters, and cultural tours. Send an enquiry and hear back from a real local guide within hours.",
+    alternates:  { canonical: "/" },
     robots:      { index: true, follow: true },
     openGraph: {
         title:       "Kivana Trails & Safaris | East Africa's tours, real local guides",
@@ -23,69 +33,47 @@ export const metadata: Metadata = {
     },
 };
 
+const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "TravelAgency",
+    name: "Kivana Trails & Safaris",
+    url: SITE_URL,
+    areaServed: ["Kenya", "Tanzania", "Uganda", "Rwanda"],
+};
+
 /**
- * Public landing page — browsable without authentication.
+ * Public landing page. VisitorProvider is already supplied by app/layout.tsx,
+ * so it is NOT repeated here.
  *
- * Authentication-aware: wrapped in VisitorProvider (client component),
- * which resolves visitor status ("loading" → "guest" | "customer" | "staff")
- * from the persisted auth store. Defaults to "guest" until hydration
- * completes — an unauthenticated visitor is never shown customer-only
- * content, and an authenticated customer sees the guest view for at most
- * one render before hydration resolves (never the reverse). See
- * hooks/use-visitor.ts for the hydration-safety details.
- *
- * Personalization touches exactly two sections:
- *   - WelcomeBackBand: renders only for status === "customer", replaces
- *     the generic guest CTA push with quick links (My Enquiries, Saved
- *     Tours, Browse more).
- *   - CtaBandGate: renders CtaBand only for guests — a logged-in customer
- *     shouldn't see a register/sign-in prompt.
- * Every other section (Hero, TrustStats, TourGrid, DestinationsStrip,
- * HowItWorks, Testimonials, EnquiryBand) renders identically regardless
- * of visitor status — no data filtering needed there, since enquire-button.tsx listings
- * and enquiry forms are the same for guests and customers alike.
- *
- * Enquiry-first, not booking: no payment or checkout entry points exist
- * on this page. TourCard links to the enquire-button.tsx detail page ("View →"), and
- * EnquiryBand collects a enquire-button.tsx-specific enquiry (tourId required by the
- * backend) rather than any booking/payment flow.
- *
- * Layout order:
- *   1. PublicNavbar
- *   2. WelcomeBackBand    — customers only
- *   3. Hero
- *   4. TrustStats
- *   5. TourGrid
- *   6. DestinationsStrip
- *   7. HowItWorks
- *   8. Testimonials
- *   9. EnquiryBand
- *  10. CtaBandGate        — guests only
- *  11. PublicFooter
- *
- * FloatingEnquiryCta renders fixed/mobile-only, outside the main flow.
- *
- * All data fetching is in TourGrid (client component, Next.js fetch + revalidate).
- * SSG/ISR is not used here because enquire-button.tsx availability changes frequently.
+ * Order: Navbar → WelcomeBackBand (customers) → Hero → SafariFinder →
+ * TrustStats → Tours → Destinations → How it works → Reviews → FAQ →
+ * CtaBandGate (guests) → Footer.
  */
 export default function PublicLandingPage() {
     return (
-        <VisitorProvider>
-            <div className="flex min-h-screen flex-col bg-background">
-                <Navbar />
-                <WelcomeBackBand />
-                <main className="flex-1">
-                    <Hero />
-                    <TourGrid />
-                    <DestinationsStrip />
-                    <HowItWorks />
-                    <Testimonials />
-                    <CtaBandGate />
-                    <TrustStats />
-                </main>
-                <Footer />
-                <FloatingEnquiryCta />
-            </div>
-        </VisitorProvider>
+        <div className="flex min-h-screen flex-col bg-background">
+            <StructuredData data={orgJsonLd} />
+            <ScrollProgress />
+            <Navbar />
+            <SectionNav />
+            <WelcomeBackBand />
+
+            <main className="flex-1">
+                <Hero />
+                <SafariFinder />
+                <TrustStats />
+
+                <div id="tours">        <TourGrid /></div>
+                <div id="destinations"> <DestinationsStrip /></div>
+                <div id="how-it-works"> <HowItWorks /></div>
+                <div id="reviews">      <Testimonials /></div>
+                <div id="faq"><FaqSection /></div>
+                <CtaBandGate />
+            </main>
+
+            <Footer />
+            <FloatingEnquiryCta />
+            <FloatingActions />
+        </div>
     );
 }

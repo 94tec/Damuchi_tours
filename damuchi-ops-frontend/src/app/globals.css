@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Fonts come from next/font in layout.tsx (--font-inter, --font-playfair,
+   --font-jetbrains-mono). The old Google Fonts @import was removed: it
+   loaded the same fonts twice and blocked rendering. */
 
 @tailwind base;
 @tailwind components;
@@ -44,21 +46,24 @@
 
     --radius: 0.625rem;
 
-    /* Legacy variables for backward compatibility */
+    /* Legacy variables for backward compatibility.
+       NOTE: the legacy `--card: #FFFFFF` was removed. It overwrote the HSL
+       --card above, so `bg-card` (hsl(var(--card))) rendered transparent.
+       If anything used the hex value, use `bg-white` or --card-solid. */
+    --card-solid: #FFFFFF;
     --savanna: #C8860A;
     --earth: #2C1810;
     --dust: #F5EFE6;
     --canopy: #1A3A2A;
     --stone: #8C7B6B;
     --sky: #E8F4F8;
-    --card: #FFFFFF;
     --horizon-rule: 2px solid var(--savanna);
   }
 
   .dark {
     /* Dark mode — "Night camp" — deep forest surfaces, sand text, clay glow */
-    --background: 165 38% 7%;        /* deep forest */
-    --foreground: 42 30% 93%;        /* sand text */
+    --background: 165 38% 7%;
+    --foreground: 42 30% 93%;
 
     --card: 165 32% 10%;
     --card-foreground: 42 30% 93%;
@@ -92,12 +97,12 @@
     --ring: 26 64% 52%;
 
     /* Legacy variables for backward compatibility */
+    --card-solid: #1A2A1F;
     --dust: #1A2A1F;
     --earth: #E8DCC8;
     --savanna: #D4A024;
     --stone: #8C7B6B;
     --canopy: #2A4A3A;
-    --card: #1A2A1F;
     --sky: #1A2A3F;
   }
 }
@@ -106,7 +111,6 @@
 @layer base {
   * {
     @apply border-border;
-    box-sizing: border-box;
   }
 
   html {
@@ -115,22 +119,27 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Keep anchor targets clear of the sticky navbar / section nav */
+  [id] {
+    scroll-margin-top: 6rem;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-inter), system-ui, sans-serif;
     font-size: 0.9375rem;
     line-height: 1.6;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
   h1, h2, h3 {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: var(--font-playfair), Georgia, serif;
     line-height: 1.2;
     letter-spacing: -0.01em;
   }
 
   h4, h5, h6 {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-inter), system-ui, sans-serif;
     font-weight: 600;
   }
 
@@ -138,23 +147,21 @@
     background-color: hsl(var(--accent) / 0.3);
   }
 
-  /* Visible keyboard focus ring everywhere, styled to the accent */
+  /* Visible keyboard focus ring. No border-radius here on purpose: forcing
+     2px made pill/rounded buttons snap square whenever they were focused. */
   :focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
-    border-radius: 2px;
   }
 }
 
 /* ── The Horizon Rule — Signature Element ──────────────────────────────────── */
-/* Applied as a top-border on the main content area of every authenticated page */
 .horizon-rule {
   border-top: var(--horizon-rule);
 }
 
 /* ── Component Layer ────────────────────────────────────────────────────────── */
 @layer components {
-  /* ── Buttons ────────────────────────────────────────────────────────────── */
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5
     text-sm font-medium transition-all duration-150
@@ -162,65 +169,28 @@
     disabled:pointer-events-none disabled:opacity-50;
   }
 
-  .btn-primary {
-    @apply btn bg-savanna text-white hover:bg-amber-700 active:scale-[0.98];
-  }
+  .btn-primary   { @apply btn bg-savanna text-white hover:bg-amber-700 active:scale-[0.98]; }
+  .btn-secondary { @apply btn bg-white text-earth border border-border hover:bg-dust active:scale-[0.98]; }
+  .btn-ghost     { @apply btn text-stone hover:text-earth hover:bg-dust active:scale-[0.98]; }
+  .btn-danger    { @apply btn bg-red-600 text-white hover:bg-red-700 active:scale-[0.98]; }
+  .btn-canopy    { @apply btn bg-canopy text-white hover:bg-green-900 active:scale-[0.98]; }
+  .btn-sm        { @apply btn px-3 py-1.5 text-xs; }
+  .btn-lg        { @apply btn px-6 py-3 text-base; }
 
-  .btn-secondary {
-    @apply btn bg-white text-earth border border-border hover:bg-dust active:scale-[0.98];
-  }
+  .card       { @apply bg-white rounded-xl border border-border shadow-card; }
+  .card-hover { @apply card transition-shadow duration-200 hover:shadow-card-hover; }
 
-  .btn-ghost {
-    @apply btn text-stone hover:text-earth hover:bg-dust active:scale-[0.98];
-  }
-
-  .btn-danger {
-    @apply btn bg-red-600 text-white hover:bg-red-700 active:scale-[0.98];
-  }
-
-  .btn-canopy {
-    @apply btn bg-canopy text-white hover:bg-green-900 active:scale-[0.98];
-  }
-
-  .btn-sm {
-    @apply btn px-3 py-1.5 text-xs;
-  }
-
-  .btn-lg {
-    @apply btn px-6 py-3 text-base;
-  }
-
-  /* ── Cards ──────────────────────────────────────────────────────────────── */
-  .card {
-    @apply bg-white rounded-xl border border-border shadow-card;
-  }
-
-  .card-hover {
-    @apply card transition-shadow duration-200 hover:shadow-card-hover;
-  }
-
-  /* ── Inputs ─────────────────────────────────────────────────────────────── */
   .input {
     @apply w-full rounded-md border border-border bg-white px-3 py-2.5
     text-sm text-earth placeholder:text-stone
     focus:outline-none focus:ring-2 focus:ring-savanna focus:border-transparent
     disabled:bg-dust disabled:cursor-not-allowed transition-colors duration-150;
   }
+  .input-error { @apply input border-red-500 focus:ring-red-500; }
 
-  .input-error {
-    @apply input border-red-500 focus:ring-red-500;
-  }
+  .label { @apply text-sm font-medium text-earth mb-1.5 block; }
 
-  /* ── Labels ─────────────────────────────────────────────────────────────── */
-  .label {
-    @apply text-sm font-medium text-earth mb-1.5 block;
-  }
-
-  /* ── Status Badges ──────────────────────────────────────────────────────── */
-  .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
-  }
-
+  .badge           { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium; }
   .badge-pending   { @apply badge bg-amber-100  text-amber-800; }
   .badge-confirmed { @apply badge bg-green-100  text-green-800; }
   .badge-cancelled { @apply badge bg-red-100    text-red-800; }
@@ -230,50 +200,29 @@
   .badge-sold-out  { @apply badge bg-red-100    text-red-800; }
   .badge-blocked   { @apply badge bg-stone/20   text-stone; }
 
-  /* ── Sidebar Navigation ────────────────────────────────────────────────── */
   .nav-item {
     @apply flex items-center gap-3 rounded-lg px-3 py-2.5
     text-sm font-medium text-dust/70
     hover:text-dust hover:bg-white/10
     transition-colors duration-150;
   }
+  .nav-item-active { @apply nav-item text-dust bg-white/15; }
 
-  .nav-item-active {
-    @apply nav-item text-dust bg-white/15;
-  }
-
-  /* ── Skeleton Loader ────────────────────────────────────────────────────── */
   .skeleton {
     @apply bg-gradient-to-r from-dust via-border to-dust bg-[length:200%_100%]
     animate-shimmer rounded;
   }
 
-  /* ── Section Eyebrow ───────────────────────────────────────────────────── */
-  .eyebrow {
-    @apply text-xs font-mono font-medium tracking-widest uppercase text-savanna;
-  }
-
-  /* ── Data Value ────────────────────────────────────────────────────────── */
-  .data-value {
-    @apply font-mono text-sm text-earth;
-  }
-
-  /* ── Tour Card Price ───────────────────────────────────────────────────── */
-  .price-tag {
-    @apply font-display text-2xl font-semibold text-savanna;
-  }
+  .eyebrow    { @apply text-xs font-mono font-medium tracking-widest uppercase text-savanna; }
+  .data-value { @apply font-mono text-sm text-earth; }
+  .price-tag  { @apply font-display text-2xl font-semibold text-savanna; }
 }
 
 /* ── Utility Layer ──────────────────────────────────────────────────────────── */
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+  .text-balance { text-wrap: balance; }
 
-  .grain-overlay {
-    position: relative;
-  }
-
+  .grain-overlay { position: relative; }
   .grain-overlay::after {
     content: "";
     position: absolute;
@@ -283,28 +232,35 @@
     mix-blend-mode: overlay;
   }
 
-  /* Staff ops sidebar gradient */
-  .sidebar-gradient {
-    background: linear-gradient(180deg, #1A3A2A 0%, #0F2419 100%);
-  }
+  .sidebar-gradient { background: linear-gradient(180deg, #1A3A2A 0%, #0F2419 100%); }
+  .divider-savanna  { border-color: var(--savanna); opacity: 0.3; }
 
-  /* Savanna divider */
-  .divider-savanna {
-    border-color: var(--savanna);
-    opacity: 0.3;
-  }
-
-  /* Tour hero overlay */
   .hero-overlay {
-    background: linear-gradient(
-            to bottom,
-            rgba(44,24,16,0.1) 0%,
-            rgba(44,24,16,0.65) 100%
-    );
+    background: linear-gradient(to bottom, rgba(44,24,16,0.1) 0%, rgba(44,24,16,0.65) 100%);
   }
+
+  /* Hero entrance: ONE orchestrated moment. Add `kv-rise kv-rise-1..4` to the
+     hero's heading / subtext / CTAs in order. Don't use it elsewhere. */
+  .kv-rise   { animation: kv-rise .8s cubic-bezier(.2,.7,.2,1) both; }
+  .kv-rise-1 { animation-delay: .05s; }
+  .kv-rise-2 { animation-delay: .18s; }
+  .kv-rise-3 { animation-delay: .32s; }
+  .kv-rise-4 { animation-delay: .46s; }
+
+  /* Slow background zoom for a hero image */
+  .kv-drift { animation: kv-drift 24s ease-in-out infinite alternate; }
 }
 
-/* ── Reduced Motion ──────────────────────────────────────────────────────────── */
+@keyframes kv-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes kv-drift {
+  from { transform: scale(1); }
+  to   { transform: scale(1.08); }
+}
+
+/* ── Reduced Motion (covers kv-rise / kv-drift too) ─────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
